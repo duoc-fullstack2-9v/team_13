@@ -1,0 +1,36 @@
+.footer {
+  background-color: #d6b89c; /* tono cafecito */
+  color: #4b2e23;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  padding: 30px 20px 10px 20px;
+  font-family: "Quicksand", sans-serif;
+}
+
+.footer-section {
+  margin: 10px;
+  min-width: 180px;
+}
+
+.footer-section h4 {
+  font-family: "Quicksand", sans-serif;
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  color: #5c3b29;
+}
+
+.footer-section p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+.footer-bottom {
+  width: 100%;
+  text-align: center;
+  margin-top: 20px;
+  border-top: 1px solid #b99b87;
+  padding-top: 10px;
+  font-size: 0.85rem;
+  color: #4b2e23;
+}

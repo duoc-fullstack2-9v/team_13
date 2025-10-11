@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap");
+
+.navbar {
+  background-color: #d6b89c; /* tono cafecito claro */
+  color: #4b2e23;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  width: 100%; /* ocupa todo el ancho sin generar scroll extra */
+  height: 60px; /* altura moderada */
+  padding: 0 20px; /* menos espacio lateral */
+  margin: 0; /* asegura que no tenga márgenes raros */
+
+  font-family: "Quicksand", sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.navbar-logo {
+font-size: 1.5rem;
+font-weight: bold;
+}
+
+.navbar-links {
+display: flex;
+gap: 30px;
+}
+
+.nav-item {
+text-decoration: none;
+color: #4b2e23;
+font-weight: 600;
+transition: color 0.3s ease;
+}
+
+.nav-item:hover {
+color: #7a5644;
+}

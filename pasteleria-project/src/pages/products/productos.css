@@ -1,0 +1,158 @@
+.productos-section {
+  padding: 50px 20px;
+  text-align: center;
+  background-color: #f8f4f0;
+}
+
+.productos-title {
+  font-family: "Cookie", cursive;
+  font-size: 2.2rem;
+  color: #4b2e23;
+  margin-bottom: 30px;
+}
+
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.producto-card {
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s;
+}
+
+.producto-card:hover {
+  transform: scale(1.05);
+}
+
+.producto-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.producto-card h3 {
+  font-family: "Quicksand", sans-serif;
+  font-size: 1.1rem;
+  color: #4b2e23;
+  padding: 10px;
+}
+
+/* === MODAL === */
+
+/* FONDO OSCURECIDO */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* inicia desde arriba */
+  z-index: 2000;
+  overflow-y: auto; /* permite scroll si el modal es largo */
+  padding: 40px 20px; /* margen superior y laterales */
+}
+
+/* CONTENEDOR DEL MODAL */
+.modal-content {
+  background-color: #fff;
+  padding: 30px 25px 25px;
+  border-radius: 15px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+  margin-top: 30px;
+  overflow-y: auto; /* scroll interno del modal */
+  max-height: 90vh; /* evita que se corte */
+}
+
+/* IMAGEN */
+.modal-content img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin: 20px 0 10px;
+}
+
+/* TÍTULO */
+.modal-content h2 {
+  margin-top: 15px;
+  font-family: "Cookie", cursive;
+  color: #4b2e23;
+  font-size: 1.9rem;
+  margin-bottom: 12px;
+}
+
+/* DESCRIPCIÓN */
+.modal-content p {
+  font-family: "Quicksand", sans-serif;
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+
+/* INFORMACIÓN EXTRA */
+.modal-info {
+  margin-top: 10px;
+  text-align: left;
+  padding: 12px 20px;
+  border-top: 1px solid #ddd;
+}
+
+.modal-precio,
+.modal-tiempo {
+  font-family: "Quicksand", sans-serif;
+  font-size: 1rem;
+  color: #4b2e23;
+  margin: 5px 0;
+}
+
+.modal-precio strong,
+.modal-tiempo strong {
+  color: #6a3e2d;
+}
+
+/* BOTÓN CERRAR */
+.modal-content button {
+  background-color: #4b2e23;
+  color: white;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+  margin-top: 20px;
+  margin-bottom: 18px;
+}
+
+.modal-content button:hover {
+  background-color: #6a3e2d;
+}
+
+/* ANIMACIÓN */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

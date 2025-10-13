@@ -33,13 +33,30 @@ const Header = () => {
               </Link>
             </li>
             <li>
-              <a href="#categorias">Categorías</a>
+              <Link
+                to="/nosotros"
+                className={location.pathname === "/nosotros" ? "active" : ""}
+              >
+                Nosotros
+              </Link>
             </li>
             <li>
-              <a href="#nosotros">Nosotros</a>
+              <Link
+                to="/contacto"
+                className={location.pathname === "/contacto" ? "active" : ""}
+              >
+                Contacto
+              </Link>
             </li>
             <li>
-              <a href="#contacto">Contacto</a>
+              <Link
+                to="/registro"
+                className={`register-btn-nav ${
+                  location.pathname === "/registro" ? "active" : ""
+                }`}
+              >
+                Registrarse
+              </Link>
             </li>
           </ul>
         </nav>

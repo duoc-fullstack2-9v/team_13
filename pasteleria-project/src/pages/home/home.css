@@ -7,36 +7,37 @@ body {
   font-family: "Quicksand", sans-serif;
 }
 
-.home-container {
+/* === Contenedor principal === */
+.home-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   padding: 40px 20px;
-  color: #4b2e23; /* tono cafecito */
+  color: #4b2e23;
+  width: 100%;
+  min-height: 100vh;
 }
 
-.home-title {
-  font-family: "Quicksand", sans-serif;
-  font-size: 3rem;
-  color: #5c3b29;
-  margin-bottom: 10px;
-}
-
-.home-subtitle {
-  font-size: 1.2rem;
-  color: #7a5644;
-  margin-bottom: 40px;
+.home-carousel {
+  width: 100%;
+  max-width: 1200px; /* Este será el límite máximo */
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
 }
 
 /* === Carrusel === */
 .carousel {
   overflow: hidden;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 100%; /* Cambia esto de 900px a 100% */
+  width: 100%; /* Agrega esto */
   border-radius: 18px;
   background-color: #fffaf5;
   box-shadow: 0 6px 20px rgba(107, 78, 61, 0.2);
   padding: 20px;
+  margin: 0 auto;
 }
-
 .carousel-track {
   display: flex;
   gap: 20px;
@@ -63,5 +64,49 @@ body {
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+/* Logo Section - NUEVO */
+.logo-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0 3rem 0;
+  padding: 0 2rem;
+  width: 100%;
+}
+
+.main-logo {
+  max-width: 500px;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.main-logo:hover {
+  transform: scale(1.02);
+}
+
+/* Responsive para el logo */
+@media (max-width: 768px) {
+  .logo-section {
+    margin: 1.5rem 0 2rem 0;
+    padding: 0 1rem;
+  }
+  
+  .main-logo {
+    max-width: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-section {
+    margin: 1rem 0 1.5rem 0;
+  }
+  
+  .main-logo {
+    max-width: 280px;
   }
 }

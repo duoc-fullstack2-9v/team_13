@@ -1,25 +1,45 @@
-import React from "react";
-import "./header.css";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import './Header.css';
 
 function Header() {
-  const handleClick = (e) => {
-    if (e.target.getAttribute("href") === "#") {
-      e.preventDefault();
-    }
+  const location = useLocation();
+
+  const isActive = (path) => {
+    return location.pathname === path;
   };
 
   return (
-    <header className="navbar">
-      <div className="navbar-logo">
-        🍰 Vive al máximo tus momentos dulces
+    <header className="header">
+      <div className="header-container">
+        {/* SOLO navegación - sin título */}
+        <nav className="header-nav">
+          <Link 
+            to="/" 
+            className={`nav-link ${isActive('/') ? 'active' : ''}`}
+          >
+            Inicio
+          </Link>
+          <Link 
+            to="/productos" 
+            className={`nav-link ${isActive('/productos') ? 'active' : ''}`}
+          >
+            Productos
+          </Link>
+          <Link 
+            to="/nosotros" 
+            className={`nav-link ${isActive('/nosotros') ? 'active' : ''}`}
+          >
+            Nosotros
+          </Link>
+          <Link 
+            to="/contacto" 
+            className={`nav-link ${isActive('/contacto') ? 'active' : ''}`}
+          >
+            Contacto
+          </Link>
+        </nav>
       </div>
-
-      <nav className="navbar-links" onClick={handleClick}>
-        <a href="#inicio" className="nav-item">Inicio</a>
-        <a href="#productos" className="nav-item">Productos</a>
-        <a href="#nosotros" className="nav-item">Nosotros</a>
-        <a href="#contacto" className="nav-item">Contacto</a>
-      </nav>
     </header>
   );
 }

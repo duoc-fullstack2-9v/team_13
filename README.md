@@ -1,16 +1,56 @@
-# React + Vite
+# 🎂 Pastelería Mil Sabores
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descripción
 
-Currently, two official plugins are available:
+Sitio web oficial de Pastelería Mil Sabores, celebrando 50 años de tradición en repostería chilena. Desarrollado con React y Vite.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Características
 
-## React Compiler
+### 🏠 Landing Page
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Diseño atractivo y moderno
+- Carrusel de imágenes destacadas
+- Sección de aniversario (50 años)
+- Beneficios exclusivos para clientes
+- Testimonios de clientes satisfechos
 
-## Expanding the ESLint configuration
+### 🛍️ Sistema de Productos
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Catálogo completo de productos
+- Filtrado por categorías
+- Diseño de cards responsive
+- Detalles de productos individuales
+
+### 👤 Sistema de Registro
+
+- Formulario de registro en 2 pasos
+- Validaciones en tiempo real
+- Detección automática de beneficios:
+  - 50% descuento para mayores de 50 años
+  - 10% permanente con código FELICES50
+  - Torta gratis para estudiantes Duoc
+- Modal de confirmación elegante
+
+## 🛠️ Tecnologías Utilizadas
+
+- **Frontend**: React 18 + Vite
+- **Estilos**: CSS3 con variables personalizadas
+- **Navegación**: React Router DOM
+- **Iconos**: Material Icons + Emojis
+- **Fuentes**: Google Fonts (Lato, Pacifico)
+
+## 🎨 Diseño
+
+### Colores Corporativos
+
+- Crema Pastel: `#FFF5E1`
+- Rosa Suave: `#FFC0CB`
+- Chocolate: `#884513`
+- Marrón Oscuro: `#5D4037`
+
+### Tipografía
+
+- Principal: Lato
+- Títulos: Pacifico
+
+## 📦 Estructura del Proyecto

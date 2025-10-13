@@ -1,6 +1,7 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import './Header.css';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import logo01 from "../assets/logo01.png";
+import "./Header.css";
 
 function Header() {
   const location = useLocation();
@@ -8,28 +9,33 @@ function Header() {
   return (
     <header className="header">
       <div className="header-container">
-        <nav className="header-nav">
-          <Link 
-            to="/" 
-            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+        <div className="logo-area">
+          <img src={logo01} alt="Pastelería MilSabores" className="logo-img" />
+          <h1 className="logo-text">Pastelería MilSabores</h1>
+        </div>
+
+        <nav className="nav">
+          <Link
+            to="/"
+            className={location.pathname === "/" ? "active" : ""}
           >
             Inicio
           </Link>
-          <Link 
-            to="/productos" 
-            className={`nav-link ${location.pathname === '/productos' ? 'active' : ''}`}
+          <Link
+            to="/productos"
+            className={location.pathname === "/productos" ? "active" : ""}
           >
             Productos
           </Link>
-          <Link 
-            to="/nosotros" 
-            className={`nav-link ${location.pathname === '/nosotros' ? 'active' : ''}`}
+          <Link
+            to="/nosotros"
+            className={location.pathname === "/nosotros" ? "active" : ""}
           >
             Nosotros
           </Link>
-          <Link 
-            to="/contacto" 
-            className={`nav-link ${location.pathname === '/contacto' ? 'active' : ''}`}
+          <Link
+            to="/contacto"
+            className={location.pathname === "/contacto" ? "active" : ""}
           >
             Contacto
           </Link>

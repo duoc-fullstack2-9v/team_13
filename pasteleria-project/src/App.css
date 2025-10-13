@@ -1,29 +1,59 @@
+/* 🔹 Reset general para todo el proyecto */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  width: 100%;
+  min-height: none;
   margin: 0;
   padding: 0;
+  font-family: 'Quicksand', sans-serif;
+  background-color: #fff;
+}
+
+/* 🔹 Evita que #root genere scroll lateral */
+#root {
   width: 100%;
   overflow-x: hidden;
 }
 
-#root {
-  width: 100%;
-  /* ELIMINA max-width, margin: auto y padding */
-  /* max-width: 1280px; ← QUITAR */
-  /* margin: 0 auto; ← QUITAR */  
-  /* padding: 2rem; ← QUITAR */
+/* 🔹 Garantiza centrado general */
+body, #root, .App {
+  display: flex;
+  flex-direction: column;
 }
 
-/* Mantén el resto de tu App.css igual */
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* 🔹 Imágenes fluidas */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
-/* ... resto de tus estilos ... */
+
+/* 🔹 Ajuste visual del carrusel */
+.home-section {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.home-carousel {
+  width: 100%;
+  max-width: none;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* 🔹 Suaviza transición del carrusel */
+.carousel-track img {
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.carousel-track img:hover {
+  transform: scale(1.03);
+}

@@ -6,11 +6,11 @@ const ProductCard = ({ producto }) => {
     <div className="product-card">
       <div className="product-image">
         <img
-          src={`/images/productos/${producto.codigo}.jpg`}
+          src={`images/productos/${producto.codigo}.jpg`}
           alt={producto.nombre}
-          onError={(e) => {
-            e.target.src = "/images/productos/default.jpg";
-          }}
+          //onError={(e) => {
+         //   e.target.src = "/images/productos/default.jpg";
+         // }}
         />
       </div>
       <div className="product-info">

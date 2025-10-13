@@ -5,36 +5,31 @@ import './Header.css';
 function Header() {
   const location = useLocation();
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
-
   return (
     <header className="header">
       <div className="header-container">
-        {/* SOLO navegación - sin título */}
         <nav className="header-nav">
           <Link 
             to="/" 
-            className={`nav-link ${isActive('/') ? 'active' : ''}`}
+            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
           >
             Inicio
           </Link>
           <Link 
             to="/productos" 
-            className={`nav-link ${isActive('/productos') ? 'active' : ''}`}
+            className={`nav-link ${location.pathname === '/productos' ? 'active' : ''}`}
           >
             Productos
           </Link>
           <Link 
             to="/nosotros" 
-            className={`nav-link ${isActive('/nosotros') ? 'active' : ''}`}
+            className={`nav-link ${location.pathname === '/nosotros' ? 'active' : ''}`}
           >
             Nosotros
           </Link>
           <Link 
             to="/contacto" 
-            className={`nav-link ${isActive('/contacto') ? 'active' : ''}`}
+            className={`nav-link ${location.pathname === '/contacto' ? 'active' : ''}`}
           >
             Contacto
           </Link>

@@ -24,10 +24,36 @@ a:hover {
 
 body {
   margin: 0;
+  padding: 0;
   display: flex;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+.header {
+  width: 100%; /* ← CAMBIAR de 100vw a 100% */
+  margin-left: 0; /* ← ELIMINAR el margin-left */
+  /* TODO LO DEMÁS SE MANTIENE IGUAL */
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  padding: 1.5rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-bottom: 4px solid #D2691E;
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.footer {
+  width: 100%; /* ← CAMBIAR de 100vw a 100% */
+  margin-left: 0; /* ← ELIMINAR el margin-left */
+  /* TODO LO DEMÁS SE MANTIENE IGUAL */
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: #FFF8DC;
+  padding: 2rem 0 1rem;
+  margin-top: auto;
 }
 
 h1 {

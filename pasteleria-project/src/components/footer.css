@@ -1,36 +1,52 @@
 .footer {
-  background-color: #d6b89c; /* tono cafecito */
-  color: #4b2e23;
+  width: 100%; /* Solo 100% normal */
+  /* TODO LO DEMÁS MANTENER IGUAL */
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: #FFF8DC;
+  padding: 2rem 0 1rem;
+  /* ... todo lo demás igual ... */
+}
+
+.footer-content {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-around;
-  padding: 30px 20px 10px 20px;
-  font-family: "Quicksand", sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 
 .footer-section {
-  margin: 10px;
-  min-width: 180px;
+  flex: 1;
+  min-width: 200px;
 }
 
 .footer-section h4 {
-  font-family: "Quicksand", sans-serif;
-  font-size: 1.3rem;
-  margin-bottom: 10px;
-  color: #5c3b29;
+  margin-bottom: 1rem;
+  font-family: 'Raleway', sans-serif;
 }
 
 .footer-section p {
-  margin: 4px 0;
-  font-size: 0.95rem;
+  margin: 0.5rem 0;
+  font-family: 'Raleway', sans-serif;
 }
 
 .footer-bottom {
-  width: 100%;
   text-align: center;
-  margin-top: 20px;
-  border-top: 1px solid #b99b87;
-  padding-top: 10px;
-  font-size: 0.85rem;
-  color: #4b2e23;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 248, 220, 0.3);
+  max-width: 1200px;
+  margin: 2rem auto 0;
+  padding: 1rem 20px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
 }

@@ -1,0 +1,26 @@
+.App {
+  text-align: center;
+}
+
+/* Estilos globales adicionales */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Personalización del scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fff5e1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ffc0cb;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #884513;
+}

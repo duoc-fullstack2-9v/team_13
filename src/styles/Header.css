@@ -13,9 +13,10 @@
 .header-container {
   max-width: 1200px;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: 2rem;
   padding: 0 2rem;
 }
 
@@ -24,6 +25,7 @@
   font-size: 2rem;
   margin: 0;
   color: #fff5e1;
+  text-align: center;
 }
 
 .logo p {
@@ -125,4 +127,98 @@
 .register-btn-nav.active {
   background: #884513;
   color: white;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.login-btn {
+  background: #5d4037;
+  color: #fff5e1;
+  padding: 10px 20px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: "Lato", sans-serif;
+}
+
+.login-btn:hover {
+  background: #4a332c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.user-role {
+  background: #ff6b6b;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.logout-btn:hover {
+  background: #5a6268;
+}
+
+.admin-link {
+  background: #28a745;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.admin-link:hover {
+  background: #218838;
+}
+
+.guest-status {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Ajustar el nav para el nuevo layout */
+.header-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  text-align: center;
+}
+
+.nav {
+  margin-left: auto;
 }

@@ -28,5 +28,11 @@ export const isOver50 = (birthDate) => {
 };
 
 export const isStudentEmail = (email) => {
-  return email.endsWith("@duoc.cl") || email.endsWith("@duocuc.cl");
+  if (typeof email !== "string" || !email) return false;
+  const lower = email.toLowerCase();
+  return (
+    lower.endsWith("@duoc.cl") ||
+    lower.endsWith("@duocuc.cl") ||
+    lower.endsWith("@duoc.uc.cl")
+  );
 };

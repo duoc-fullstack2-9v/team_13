@@ -189,8 +189,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Nombres *</label>
+                <label htmlFor="nombres">Nombres *</label>
                 <input
+                  id="nombres"
                   type="text"
                   value={formData.nombres}
                   onChange={(e) => handleInputChange("nombres", e.target.value)}
@@ -203,8 +204,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
               </div>
 
               <div className="form-group">
-                <label>Apellidos *</label>
+                <label htmlFor="apellidos">Apellidos *</label>
                 <input
+                  id="apellidos"
                   type="text"
                   value={formData.apellidos}
                   onChange={(e) =>
@@ -220,8 +222,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
             </div>
 
             <div className="form-group">
-              <label>Email *</label>
+              <label htmlFor="email">Email *</label>
               <input
+                id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
@@ -240,8 +243,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Teléfono</label>
+                <label htmlFor="telefono">Teléfono</label>
                 <input
+                  id="telefono"
                   type="tel"
                   placeholder="9 1234 5678"
                   value={formData.telefono}
@@ -256,8 +260,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
               </div>
 
               <div className="form-group">
-                <label>Fecha de Nacimiento</label>
+                <label htmlFor="fechaNacimiento">Fecha de Nacimiento</label>
                 <input
+                  id="fechaNacimiento"
                   type="text"
                   placeholder="DD/MM/AAAA"
                   value={formData.fechaNacimiento}
@@ -278,8 +283,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
             </div>
 
             <div className="form-group">
-              <label>Dirección</label>
+              <label htmlFor="direccion">Dirección</label>
               <input
+                id="direccion"
                 type="text"
                 value={formData.direccion}
                 onChange={(e) => handleInputChange("direccion", e.target.value)}

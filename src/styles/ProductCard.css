@@ -87,3 +87,39 @@
   background-color: #884513;
   color: #fff5e1;
 }
+
+.admin-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.edit-btn,
+.delete-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  font-family: "Lato", sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.edit-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #45a049;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #da190b;
+}

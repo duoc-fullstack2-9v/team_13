@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Categorias from "../components/Categorias";
 import ProductCard from "../components/ProductCard";
-import { productos, categorias } from "../data/productos";
+import { productos, categorias } from "../data/products";
 import "../styles/ProductosPage.css";
 
 const ProductosPage = () => {
   const { categoria } = useParams();
+  const { user } = useAuth();
   const [categoriaActiva, setCategoriaActiva] = useState(categoria || "todos");
+  const isAdmin = user?.role === 'admin';
 
   const productosFiltrados =
     categoriaActiva === "todos"
@@ -56,7 +59,11 @@ const ProductosPage = () => {
             {productosFiltrados.length > 0 ? (
               <div className="productos-grid">
                 {productosFiltrados.map((producto) => (
-                  <ProductCard key={producto.codigo} producto={producto} />
+                  <ProductCard 
+                    key={producto.codigo} 
+                    producto={producto}
+                    showEditOptions={isAdmin}
+                  />
                 ))}
               </div>
             ) : (

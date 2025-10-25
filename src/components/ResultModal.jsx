@@ -1,7 +1,7 @@
 import React from "react";
 import "../styles/ResultModal.css";
 
-const ResultModal = ({ type, title, message, onClose }) => {
+const ResultModal = ({ isOpen, type, title, message, onClose }) => {
   const getIcon = () => {
     switch (type) {
       case "success":
@@ -23,6 +23,8 @@ const ResultModal = ({ type, title, message, onClose }) => {
         return "btn-default";
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">

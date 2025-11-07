@@ -7,4 +7,10 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  define: {
+    __DEV__: true
+  },
+  optimizeDeps: {
+    exclude: ['firebase']
+  }
 });

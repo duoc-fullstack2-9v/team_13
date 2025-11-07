@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "../styles/RegisterForm.css";
 
 const RegisterForm = ({ onSuccess, onError }) => {
+  const { signUp, signInWithGoogle, user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Paso 1: Información personal
@@ -147,23 +151,69 @@ const RegisterForm = ({ onSuccess, onError }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simular envío a API
     try {
-      // Simular delay de red
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Registrar usuario con Firebase
+      const additionalData = {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        telefono: formData.telefono,
+        fechaNacimiento: formData.fechaNacimiento,
+        direccion: formData.direccion,
+        nombreUsuario: formData.nombreUsuario,
+        codigoDescuento: formData.codigoDescuento,
+        benefits: detectedBenefits,
+        registrationDate: new Date().toISOString()
+      };
 
-      // Simular éxito o error aleatorio para demo (en producción siempre sería éxito si las validaciones pasan)
-      const isSuccess = Math.random() > 0.2; // 80% de éxito para demo
-
-      if (isSuccess) {
-        onSuccess(formData);
-      } else {
-        throw new Error(
-          "Error de conexión con el servidor. Por favor, intenta nuevamente."
-        );
+      await signUp(formData.email, formData.password, additionalData);
+      
+      // Registro exitoso
+      if (onSuccess) {
+        onSuccess({ ...formData, ...additionalData });
       }
+      
+      // Redirigir al usuario
+      navigate('/');
+      
     } catch (error) {
-      onError(error);
+      console.error('Error en registro:', error);
+      const errorMessage = getFirebaseErrorMessage(error.code);
+      if (onError) {
+        onError(new Error(errorMessage));
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getFirebaseErrorMessage = (errorCode) => {
+    switch (errorCode) {
+      case 'auth/email-already-in-use':
+        return 'Este email ya está registrado. Intenta iniciar sesión.';
+      case 'auth/invalid-email':
+        return 'El formato del email no es válido.';
+      case 'auth/operation-not-allowed':
+        return 'El registro con email no está habilitado.';
+      case 'auth/weak-password':
+        return 'La contraseña es muy débil. Debe tener al menos 6 caracteres.';
+      default:
+        return 'Error al registrar usuario. Por favor, intenta nuevamente.';
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    try {
+      setIsSubmitting(true);
+      await signInWithGoogle();
+      if (onSuccess) {
+        onSuccess({ provider: 'google' });
+      }
+      navigate('/');
+    } catch (error) {
+      console.error('Error en registro con Google:', error);
+      if (onError) {
+        onError(new Error('Error al registrarse con Google. Intenta nuevamente.'));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -171,6 +221,23 @@ const RegisterForm = ({ onSuccess, onError }) => {
 
   return (
     <div className="register-form">
+      {/* Opción de registro rápido con Google */}
+      <div className="google-register-section">
+        <h3>Registro Rápido</h3>
+        <button 
+          type="button"
+          onClick={handleGoogleRegister}
+          className="google-register-btn"
+          disabled={isSubmitting}
+        >
+          <span className="google-icon">G</span>
+          {isSubmitting ? 'Registrando...' : 'Registrarse con Google'}
+        </button>
+        <div className="divider">
+          <span>o registrarse con email</span>
+        </div>
+      </div>
+
       <div className="step-indicator">
         <div className={`step ${step >= 1 ? "active" : ""}`}>
           <span>1</span>

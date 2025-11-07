@@ -9,16 +9,19 @@ const Carrusel = () => {
       id: 1,
       title: "50 Años de Tradición",
       description: "Celebrando medio siglo de los sabores más dulces",
+      backgroundImage: "/images/productos/TC001.jpg"
     },
     {
       id: 2,
       title: "Récord Guinness 1995",
       description: "Creadores de la torta más grande del mundo",
+      backgroundImage: "/images/productos/TE001.jpg"
     },
     {
       id: 3,
       title: "Productos de Calidad",
       description: "Elaborados con los mejores ingredientes",
+      backgroundImage: "/images/productos/PT001.jpg"
     },
   ];
 
@@ -39,6 +42,9 @@ const Carrusel = () => {
             className={`carrusel-slide ${
               index === currentSlide ? "active" : ""
             }`}
+            style={{
+              backgroundImage: `linear-gradient(rgba(136, 69, 19, 0.7), rgba(136, 69, 19, 0.7)), url(${slide.backgroundImage})`
+            }}
           >
             <div className="slide-content">
               <h2>{slide.title}</h2>

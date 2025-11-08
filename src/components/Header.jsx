@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import CartIcon from "./CartIcon";
 import "../styles/Header.css";
 
 const Header = () => {
@@ -61,6 +62,16 @@ const Header = () => {
                 </Link>
               </li>
             )}
+            {user && (
+              <li>
+                <Link
+                  to="/mis-pedidos"
+                  className={location.pathname === "/mis-pedidos" ? "active" : ""}
+                >
+                  Mis Pedidos
+                </Link>
+              </li>
+            )}
             {user ? (
               <>
                 <li className="user-greeting">
@@ -81,6 +92,9 @@ const Header = () => {
                       user.displayName.split(' ').slice(0, 2).join(' ') : 
                       user.email?.split('@')[0] || 'Usuario'}!
                   </span>
+                </li>
+                <li>
+                  <CartIcon />
                 </li>
                 <li>
                   <button 

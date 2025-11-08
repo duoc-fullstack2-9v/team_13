@@ -95,6 +95,14 @@ class ApiService {
     return this.request('/api/pedidos');
   }
 
+  async getOrdersByUser(userEmail) {
+    return this.request(`/api/pedidos/cliente/${encodeURIComponent(userEmail)}`);
+  }
+
+  async getOrder(orderId) {
+    return this.request(`/api/pedidos/${orderId}`);
+  }
+
   async createOrder(orderData) {
     return this.request('/api/pedidos', {
       method: 'POST',
@@ -102,9 +110,29 @@ class ApiService {
     });
   }
 
+  async updateOrder(orderId, orderData) {
+    return this.request(`/api/pedidos/${orderId}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  async deleteOrder(orderId) {
+    return this.request(`/api/pedidos/${orderId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async convertOrderToSale(orderId) {
     return this.request(`/api/pedidos/${orderId}/convert-to-sale`, {
       method: 'POST',
+    });
+  }
+
+  async updateOrderStatus(orderId, status) {
+    return this.request(`/api/pedidos/${orderId}/estado`, {
+      method: 'PUT',
+      body: JSON.stringify({ estado: status }),
     });
   }
 

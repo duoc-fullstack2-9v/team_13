@@ -1,33 +1,14 @@
 # 🎂 Pastelería Mil Sabores
 
-## Descripción
+Sistema web completo para Pastelería Mil Sabores con frontend React y backend Spring Boot.
 
-Sitio web oficial de Pastelería Mil Sabores, celebrando 50 años de tradición en repostería chilena. Desarrollado con React y Vite.
+## 🚀 Características Principales
 
-## ✨ Características
-
-### 🏠 Landing Page
-
-- Diseño atractivo y moderno
-- Carrusel de imágenes destacadas
-- Sección de aniversario (50 años)
-- Beneficios exclusivos para clientes
-- Testimonios de clientes satisfechos
-
-### 🛍️ Sistema de Productos
-
-- Catálogo completo de productos
-- Filtrado por categorías
-- Diseño de cards responsive
-- Detalles de productos individuales
-
-### 👤 Sistema de Registro
-
-- Formulario de registro en 2 pasos
-- Validaciones en tiempo real
-- Detección automática de beneficios:
-  - 50% descuento para mayores de 50 años
-  - 10% permanente con código FELICES50
+- **Frontend:** React 18 + Vite + Firebase Auth
+- **Backend:** Spring Boot 3.2 + MySQL
+- **Administración:** Panel admin completo
+- **Carrito:** Sistema de compras funcional
+- **Autenticación:** Google Login + Registro manual
   - Torta gratis para estudiantes Duoc
 - Modal de confirmación elegante
 
@@ -46,11 +27,32 @@ Sitio web oficial de Pastelería Mil Sabores, celebrando 50 años de tradición 
 - Crema Pastel: `#FFF5E1`
 - Rosa Suave: `#FFC0CB`
 - Chocolate: `#884513`
-- Marrón Oscuro: `#5D4037`
+## ⚡ Instalación y Uso
 
-### Tipografía
+### Frontend
+```bash
+npm install
+npm run dev
+```
 
-- Principal: Lato
-- Títulos: Pacifico
+### Backend (panaderia-api)
+```bash
+mvn spring-boot:run
+```
 
-## 📦 Estructura del Proyecto
+## 📱 Funcionalidades
+
+- **🏠 Landing Page** - Diseño responsivo con carrusel
+- **🛒 Carrito de Compras** - Sistema completo de pedidos  
+- **👤 Autenticación** - Google Login + Firebase
+- **📊 Panel Admin** - Gestión de pedidos, usuarios y ventas
+- **🍰 Catálogo** - Productos con filtros y categorías
+
+## 🛠️ Tecnologías
+
+**Frontend:** React 18, Vite, Firebase, CSS3  
+**Backend:** Spring Boot 3.2, MySQL, JPA  
+**Herramientas:** Git, Maven, Node.js
+
+---
+*Examen Final - Desarrollo Fullstack*

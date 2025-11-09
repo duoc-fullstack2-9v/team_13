@@ -25,7 +25,6 @@ const Categorias = ({ categorias, categoriaActiva, onCategoriaChange }) => {
 
   return (
     <div className="categorias">
-      <h2>Nuestras Categorías</h2>
       <div className="categorias-grid">
         {categorias.map((categoria) => (
           <div

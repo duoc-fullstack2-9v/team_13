@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CartIcon from "./CartIcon";
 import "../styles/Header.css";
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut, signInWithGoogle } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
 
   return (
     <header className="header">
@@ -15,7 +17,7 @@ const Header = () => {
         <div className="logo">
           <Link to="/">
             <h1>Pastelería Mil Sabores</h1>
-            <p>Celebrando 50 años de dulzura</p>
+            <p>50 años de dulzura</p>
           </Link>
         </div>
         <nav className="nav">
@@ -25,7 +27,7 @@ const Header = () => {
                 to="/"
                 className={location.pathname === "/" ? "active" : ""}
               >
-                Inicio
+                🏠 Inicio
               </Link>
             </li>
             <li>
@@ -33,7 +35,7 @@ const Header = () => {
                 to="/productos"
                 className={location.pathname === "/productos" ? "active" : ""}
               >
-                Productos
+                🍰 Productos
               </Link>
             </li>
             <li>
@@ -41,7 +43,7 @@ const Header = () => {
                 to="/nosotros"
                 className={location.pathname === "/nosotros" ? "active" : ""}
               >
-                Nosotros
+                👥 Nosotros
               </Link>
             </li>
             <li>
@@ -49,17 +51,77 @@ const Header = () => {
                 to="/contacto"
                 className={location.pathname === "/contacto" ? "active" : ""}
               >
-                Contacto
+                📞 Contacto
               </Link>
             </li>
             {user && user.userType === 'admin' && (
-              <li>
+              <li 
+                className="admin-dropdown"
+                onMouseEnter={() => setShowAdminDropdown(true)}
+                onMouseLeave={() => setShowAdminDropdown(false)}
+              >
                 <Link
-                  to="/admin/productos"
-                  className={location.pathname === "/admin/productos" ? "active" : ""}
+                  to="/admin"
+                  className={location.pathname.startsWith("/admin") ? "active" : ""}
                 >
-                  Admin
+                  ⚙️ Admin <span className="dropdown-arrow">▼</span>
                 </Link>
+                <div className={`dropdown-content ${showAdminDropdown ? 'show' : ''}`}>
+                  <Link 
+                    to="/admin" 
+                    onClick={() => {
+                      navigate('/admin');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    📊 Dashboard
+                  </Link>
+                  <Link 
+                    to="/admin/productos"
+                    onClick={() => {
+                      navigate('/admin/productos');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    🍰 Productos
+                  </Link>
+                  <Link 
+                    to="/admin/pedidos"
+                    onClick={() => {
+                      navigate('/admin/pedidos');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    📋 Pedidos
+                  </Link>
+                  <Link 
+                    to="/admin/usuarios"
+                    onClick={() => {
+                      navigate('/admin/usuarios');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    👥 Usuarios
+                  </Link>
+                  <Link 
+                    to="/admin/ventas"
+                    onClick={() => {
+                      navigate('/admin/ventas');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    💰 Ventas
+                  </Link>
+                  <Link 
+                    to="/admin/reportes"
+                    onClick={() => {
+                      navigate('/admin/reportes');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    📈 Reportes
+                  </Link>
+                </div>
               </li>
             )}
             {user && (
@@ -68,7 +130,7 @@ const Header = () => {
                   to="/mis-pedidos"
                   className={location.pathname === "/mis-pedidos" ? "active" : ""}
                 >
-                  Mis Pedidos
+                  📦 Mis Pedidos
                 </Link>
               </li>
             )}

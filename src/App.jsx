@@ -10,6 +10,10 @@ import AdminManager from "./components/AdminManager";
 import UserOrdersPage from "./pages/UserOrdersPage";
 import NosotrosPage from "./pages/NosotrosPage";
 import ContactoPage from "./pages/ContactoPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminPedidosPage from "./pages/AdminPedidosPage";
+import AdminUsuariosPage from "./pages/AdminUsuariosPage";
+import AdminVentasPage from "./pages/AdminVentasPage";
 import "./App.css";
 
 function App() {
@@ -24,7 +28,12 @@ function App() {
             <Route path="/nosotros" element={<NosotrosPage />} />
             <Route path="/contacto" element={<ContactoPage />} />
             <Route path="/registro" element={<RegisterPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/productos" element={<ProductManagerPage />} />
+            <Route path="/admin/pedidos" element={<AdminPedidosPage />} />
+            <Route path="/admin/usuarios" element={<AdminUsuariosPage />} />
+            <Route path="/admin/ventas" element={<AdminVentasPage />} />
+            <Route path="/admin/reportes" element={<AdminDashboard />} />
             <Route path="/setup-admins" element={<AdminManager />} />
             <Route path="/mis-pedidos" element={<UserOrdersPage />} />
           </Routes>

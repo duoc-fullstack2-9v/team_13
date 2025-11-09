@@ -92,7 +92,9 @@ class ApiService {
 
   // PEDIDOS
   async getOrders() {
-    return this.request('/api/pedidos');
+    const response = await this.request('/api/pedidos');
+    // La API devuelve {success: true, count: X, pedidos: [...]}
+    return response.pedidos || [];
   }
 
   async getOrdersByUser(userEmail) {
@@ -138,14 +140,48 @@ class ApiService {
 
   // USUARIOS
   async getUsers() {
-    return this.request('/api/users');
+    const response = await this.request('/api/usuarios');
+    // La API devuelve {success: true, count: X, usuarios: [...]}
+    return response.usuarios || [];
+  }
+
+  async getAllUsers() {
+    const response = await this.request('/api/usuarios');
+    // La API devuelve {success: true, count: X, usuarios: [...]}
+    return response.usuarios || [];
   }
 
   async createUser(userData) {
-    return this.request('/api/users', {
+    return this.request('/api/usuarios/registro', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
+  }
+
+  // PEDIDOS - métodos adicionales para admin
+  async getAllOrders() {
+    const response = await this.request('/api/pedidos');
+    // La API devuelve {success: true, count: X, pedidos: [...]}
+    return response.pedidos || [];
+  }
+
+  // VENTAS - métodos adicionales para admin
+  async getAllSales() {
+    const response = await this.request('/api/ventas');
+    // La API devuelve {ventas: [...]}
+    return response.ventas || [];
+  }
+
+  async getSalesStats() {
+    return this.request('/api/ventas/estadisticas');
+  }
+
+  async getSalesReport(startDate, endDate) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('fechaInicio', startDate);
+    if (endDate) params.append('fechaFin', endDate);
+    
+    return this.request(`/api/ventas/reporte?${params.toString()}`);
   }
 }
 

@@ -110,20 +110,23 @@ body {
 
 .ver-todos-btn {
   display: inline-block;
-  background-color: var(--color-chocolate);
-  color: var(--color-crema);
-  padding: 10px 20px;
+  background: linear-gradient(135deg, #884513 0%, #5d4037 100%);
+  color: #fff5e1;
+  padding: 12px 25px;
   border-radius: 25px;
-  font-family: var(--font-primary);
+  font-family: "Lato", sans-serif;
   font-weight: 600;
-  margin-top: var(--spacing-sm);
-  transition: all var(--transition-normal);
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  box-shadow: 0 5px 15px rgba(136, 69, 19, 0.3);
 }
 
 .ver-todos-btn:hover {
-  background-color: var(--color-marron-oscuro);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-medium);
+  background: linear-gradient(135deg, #5d4037 0%, #884513 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(136, 69, 19, 0.4);
+  color: #fff5e1;
 }
 
 .anniversary-section {
@@ -324,25 +327,29 @@ body {
 }
 
 .cta-btn.primary {
-  background: #ffc0cb;
-  color: #5d4037;
+  background: linear-gradient(135deg, #884513 0%, #5d4037 100%);
+  color: #fff5e1;
+  box-shadow: 0 5px 15px rgba(136, 69, 19, 0.3);
 }
 
 .cta-btn.primary:hover {
-  background: #ffb6c1;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #5d4037 0%, #884513 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(136, 69, 19, 0.4);
 }
 
 .cta-btn.secondary {
-  background: transparent;
-  color: white;
-  border: 2px solid white;
+  background: rgba(255, 245, 225, 0.9);
+  color: #884513;
+  border: 2px solid #884513;
+  backdrop-filter: blur(10px);
 }
 
 .cta-btn.secondary:hover {
-  background: white;
-  color: #884513;
-  transform: translateY(-2px);
+  background: #fff5e1;
+  color: #5d4037;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 245, 225, 0.6);
 }
 
 /* Responsive */

@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import RegisterForm from "../components/RegisterForm";
 import ResultModal from "../components/ResultModal";
 import "../styles/RegisterPage.css";
+import "../styles/AuthPages.css";
 
 const RegisterPage = () => {
   const navigate = useNavigate();

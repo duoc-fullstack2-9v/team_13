@@ -398,7 +398,123 @@
 
 .admin-dropdown .dropdown-content a:hover {
   background-color: #884513;
-  color: #ffc0cb;
+}
+
+/* Estilos para botones de login y registro en header */
+.login-btn-nav {
+  background: #884513;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: "Lato", sans-serif;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border: 2px solid #884513;
+}
+
+.login-btn-nav:hover {
+  background: #5d4037;
+  border-color: #5d4037;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(136, 69, 19, 0.3);
+}
+
+.login-btn-nav.active {
+  background: #5d4037;
+  border-color: #5d4037;
+}
+
+.register-btn-nav {
+  background: #ffc0cb;
+  color: #5d4037;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: "Lato", sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border: 2px solid #ffc0cb;
+}
+
+.register-btn-nav:hover {
+  background: #ffb6c1;
+  border-color: #ffb6c1;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(255, 192, 203, 0.4);
+}
+
+.register-btn-nav.active {
+  background: #884513;
+  color: white;
+  border-color: #884513;
+}
+
+.google-auth {
+  display: flex;
+  align-items: center;
+}
+
+.google-auth .google-login-btn {
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #e0e0e0;
+}
+
+.google-auth .google-login-btn:hover {
+  border-color: #884513;
+  background: #f8f8f8;
+}
+
+.google-auth .google-icon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Responsive para auth buttons */
+@media (max-width: 968px) {
+  .auth-buttons {
+    gap: 0.5rem;
+  }
+  
+  .login-btn-nav,
+  .register-btn-nav {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .google-auth .google-login-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .login-btn-nav,
+  .register-btn-nav {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    text-align: center;
+    min-width: 120px;
+  }
+  
+  .google-auth {
+    align-self: center;
+    margin-top: 0.25rem;
+  }
 }
 
 .dropdown-arrow {

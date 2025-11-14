@@ -9,6 +9,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase/config';
 import adminService from '../services/adminService';
+import apiService from '../services/apiService';
 
 const AuthContext = createContext();
 
@@ -37,6 +38,51 @@ export const AuthProvider = ({ children }) => {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           const userData = userDoc.exists() ? userDoc.data() : {};
           
+          // Sincronizar usuario con la API backend
+          let apiUserData = {};
+          try {
+            console.log('🔍 Buscando usuario en API:', firebaseUser.email);
+            apiUserData = await apiService.getUserByEmail(firebaseUser.email);
+            console.log('✅ Usuario encontrado en API:', apiUserData);
+          } catch (error) {
+            console.warn('⚠️ Usuario no existe en API, creándolo automáticamente...');
+            // Si el usuario no existe en la API, crearlo automáticamente
+            try {
+              const newUserData = {
+                email: firebaseUser.email,
+                nombre: firebaseUser.displayName?.split(' ')[0] || userData.nombre || 'Usuario',
+                apellido: firebaseUser.displayName?.split(' ').slice(1).join(' ') || userData.apellido || '',
+                password: 'firebase_auth_user', // Password temporal para usuarios de Firebase
+                telefono: userData.telefono || '',
+                fechaNacimiento: userData.fechaNacimiento || null,
+                userType: userType
+              };
+              
+              console.log('📝 Creando usuario en API:', newUserData);
+              const createResponse = await apiService.createUser(newUserData);
+              apiUserData = newUserData;
+              console.log('✅ Usuario creado exitosamente en la API:', createResponse);
+            } catch (createError) {
+              console.error('❌ Error al crear usuario en API:', createError);
+              // Intentar con datos mínimos
+              try {
+                const minimalUserData = {
+                  email: firebaseUser.email,
+                  nombre: 'Usuario',
+                  apellido: 'Firebase',
+                  password: 'temp123',
+                  userType: userType
+                };
+                console.log('🔄 Reintentando con datos mínimos:', minimalUserData);
+                await apiService.createUser(minimalUserData);
+                apiUserData = minimalUserData;
+                console.log('✅ Usuario creado con datos mínimos');
+              } catch (secondError) {
+                console.error('❌ Error definitivo al crear usuario:', secondError);
+              }
+            }
+          }
+          
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
@@ -44,6 +90,10 @@ export const AuthProvider = ({ children }) => {
             photoURL: firebaseUser.photoURL,
             userType: userType, // Determinado por consulta a Firebase
             isAdmin: isAdmin,
+            // Información adicional de la API
+            nombre: apiUserData?.nombre || null,
+            apellido: apiUserData?.apellido || null,
+            telefono: apiUserData?.telefono || null,
             ...userData
           });
 

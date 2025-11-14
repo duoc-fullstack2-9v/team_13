@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import apiService from '../services/apiService';
+import firebaseUserService from '../services/firebaseUserService';
+import UserManagement from '../components/admin/UserManagement';
+import ProductManagement from '../components/admin/ProductManagement';
 import '../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const { tab } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [data, setData] = useState({
     products: [],
@@ -23,19 +28,61 @@ const AdminDashboard = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingType, setEditingType] = useState(null); // 'order', 'user', 'sale'
 
   // Verificar autenticación y permisos de admin
   if (loading) {
     return <div className="loading">Cargando...</div>;
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !user.isAdmin) {
     return <Navigate to="/" replace />;
   }
 
   useEffect(() => {
     loadAllData();
   }, []);
+
+  // Manejar navegación por URL
+  useEffect(() => {
+    if (tab) {
+      const validTabs = ['dashboard', 'products', 'orders', 'users', 'userManagement', 'sales', 'reports'];
+      const tabMapping = {
+        'productos': 'products',
+        'pedidos': 'orders', 
+        'usuarios': 'users',
+        'mantenedor-usuarios': 'userManagement',
+        'ventas': 'sales',
+        'reportes': 'reports'
+      };
+      
+      const mappedTab = tabMapping[tab] || tab;
+      if (validTabs.includes(mappedTab)) {
+        setActiveTab(mappedTab);
+      } else {
+        setActiveTab('dashboard');
+      }
+    } else {
+      setActiveTab('dashboard');
+    }
+  }, [tab]);
+
+  // Función para cambiar pestaña y actualizar URL
+  const changeTab = (newTab) => {
+    setActiveTab(newTab);
+    const urlMapping = {
+      'dashboard': '/admin',
+      'products': '/admin/productos',
+      'orders': '/admin/pedidos',
+      'users': '/admin/usuarios',
+      'userManagement': '/admin/mantenedor-usuarios',
+      'sales': '/admin/ventas',
+      'reports': '/admin/reportes'
+    };
+    navigate(urlMapping[newTab] || '/admin');
+  };
 
   const loadAllData = async () => {
     try {
@@ -45,7 +92,7 @@ const AdminDashboard = () => {
       const [products, orders, users, sales] = await Promise.all([
         apiService.getProducts().catch(() => []),
         apiService.getAllOrders().catch(() => []),
-        apiService.getAllUsers().catch(() => []),
+        firebaseUserService.getAllUsers().catch(() => []),
         apiService.getAllSales().catch(() => [])
       ]);
       
@@ -97,6 +144,51 @@ const AdminDashboard = () => {
       'INACTIVO': '#6c757d'
     };
     return colors[status] || '#6c757d';
+  };
+
+  // Funciones para manejar CRUD
+  const handleEditOrder = (order) => {
+    setSelectedItem(order);
+    setEditingType('order');
+    setShowEditModal(true);
+  };
+
+  const handleDeleteOrder = (order) => {
+    setSelectedItem(order);
+    setEditingType('order');
+    setShowDeleteModal(true);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedItem(user);
+    setEditingType('user');
+    setShowEditModal(true);
+  };
+
+  const handleDeleteUser = (user) => {
+    setSelectedItem(user);
+    setEditingType('user');
+    setShowDeleteModal(true);
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await apiService.updateOrderStatus(orderId, newStatus);
+      loadAllData(); // Recargar datos
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
+  };
+
+  const deleteOrder = async (orderId) => {
+    try {
+      await apiService.deleteOrder(orderId);
+      loadAllData(); // Recargar datos
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting order:', error);
+    }
   };
 
   // Componente de tabla reutilizable
@@ -306,7 +398,8 @@ const AdminDashboard = () => {
         title="Pedidos"
         data={data.orders}
         columns={columns}
-        onEdit={(order) => console.log('Editar pedido:', order)}
+        onEdit={handleEditOrder}
+        onDelete={handleDeleteOrder}
         emptyMessage="No hay pedidos registrados"
       />
     );
@@ -326,7 +419,8 @@ const AdminDashboard = () => {
         title="Usuarios"
         data={data.users}
         columns={columns}
-        onEdit={(user) => console.log('Editar usuario:', user)}
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
         emptyMessage="No hay usuarios registrados"
       />
     );
@@ -424,11 +518,15 @@ const AdminDashboard = () => {
               </span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">Ventas Este Mes:</span>
+              <span className="stat-label">Pedidos Este Mes:</span>
               <span className="stat-value">
-                {data.orders.filter(order => 
-                  new Date(order.fechaPedido).getMonth() === new Date().getMonth()
-                ).length}
+                {data.orders.filter(order => {
+                  if (!order.fechaCreacion) return false;
+                  const orderDate = new Date(order.fechaCreacion);
+                  const currentDate = new Date();
+                  return orderDate.getMonth() === currentDate.getMonth() && 
+                         orderDate.getFullYear() === currentDate.getFullYear();
+                }).length}
               </span>
             </div>
             <div className="stat-item">
@@ -481,42 +579,49 @@ const AdminDashboard = () => {
           <nav className="admin-nav">
             <button 
               className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => changeTab('dashboard')}
             >
               <span className="nav-icon">📊</span>
               Dashboard
             </button>
             <button 
               className={`nav-item ${activeTab === 'products' ? 'active' : ''}`}
-              onClick={() => setActiveTab('products')}
+              onClick={() => changeTab('products')}
             >
               <span className="nav-icon">🍰</span>
               Productos
             </button>
             <button 
               className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
+              onClick={() => changeTab('orders')}
             >
               <span className="nav-icon">📋</span>
               Pedidos
             </button>
             <button 
               className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => setActiveTab('users')}
+              onClick={() => changeTab('users')}
             >
               <span className="nav-icon">👥</span>
-              Usuarios
+              Lista Usuarios
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'userManagement' ? 'active' : ''}`}
+              onClick={() => changeTab('userManagement')}
+            >
+              <span className="nav-icon">⚙️</span>
+              Gestión Usuarios
             </button>
             <button 
               className={`nav-item ${activeTab === 'sales' ? 'active' : ''}`}
-              onClick={() => setActiveTab('sales')}
+              onClick={() => changeTab('sales')}
             >
               <span className="nav-icon">💰</span>
               Ventas
             </button>
             <button 
               className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reports')}
+              onClick={() => changeTab('reports')}
             >
               <span className="nav-icon">📈</span>
               Reportes
@@ -526,13 +631,174 @@ const AdminDashboard = () => {
 
         <div className="admin-main">
           {activeTab === 'dashboard' && renderDashboard()}
-          {activeTab === 'products' && renderProducts()}
+          {activeTab === 'products' && <ProductManagement />}
           {activeTab === 'orders' && renderOrders()}
           {activeTab === 'users' && renderUsers()}
+          {activeTab === 'userManagement' && <UserManagement />}
           {activeTab === 'sales' && renderSales()}
           {activeTab === 'reports' && renderReports()}
         </div>
       </div>
+
+      {/* Modal para editar */}
+      {showEditModal && selectedItem && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>
+                Editar {editingType === 'order' ? 'Pedido' : 'Usuario'} 
+                {editingType === 'order' && ` #${selectedItem.id}`}
+              </h3>
+              <button 
+                className="modal-close"
+                onClick={() => setShowEditModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {editingType === 'order' && (
+                <div className="edit-order-form">
+                  <div className="form-group">
+                    <label>Cliente:</label>
+                    <p>{selectedItem.cliente || selectedItem.email}</p>
+                  </div>
+                  <div className="form-group">
+                    <label>Total:</label>
+                    <p>{formatCurrency(selectedItem.total)}</p>
+                  </div>
+                  <div className="form-group">
+                    <label>Estado:</label>
+                    <select 
+                      value={selectedItem.estado || 'PENDIENTE'}
+                      onChange={(e) => setSelectedItem({...selectedItem, estado: e.target.value})}
+                    >
+                      <option value="PENDIENTE">Pendiente</option>
+                      <option value="EN_PREPARACION">En Preparación</option>
+                      <option value="LISTO">Listo</option>
+                      <option value="ENTREGADO">Entregado</option>
+                      <option value="CANCELADO">Cancelado</option>
+                    </select>
+                  </div>
+                  <div className="modal-actions">
+                    <button 
+                      className="btn-secondary"
+                      onClick={() => setShowEditModal(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="btn-primary"
+                      onClick={() => updateOrderStatus(selectedItem.id, selectedItem.estado)}
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </div>
+              )}
+              {editingType === 'user' && (
+                <div className="edit-user-form">
+                  <div className="form-group">
+                    <label>Email:</label>
+                    <p>{selectedItem.email}</p>
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre:</label>
+                    <input 
+                      type="text"
+                      value={selectedItem.nombre || ''}
+                      onChange={(e) => setSelectedItem({...selectedItem, nombre: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo:</label>
+                    <select 
+                      value={selectedItem.userType || 'user'}
+                      onChange={(e) => setSelectedItem({...selectedItem, userType: e.target.value})}
+                    >
+                      <option value="user">Usuario</option>
+                      <option value="admin">Administrador</option>
+                    </select>
+                  </div>
+                  <div className="modal-actions">
+                    <button 
+                      className="btn-secondary"
+                      onClick={() => setShowEditModal(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="btn-primary"
+                      onClick={() => {
+                        console.log('Actualizar usuario:', selectedItem);
+                        setShowEditModal(false);
+                      }}
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para eliminar */}
+      {showDeleteModal && selectedItem && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Confirmar Eliminación</h3>
+              <button 
+                className="modal-close"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>
+                ¿Estás seguro de que deseas eliminar este {editingType === 'order' ? 'pedido' : 'usuario'}?
+              </p>
+              {editingType === 'order' && (
+                <div className="delete-details">
+                  <p><strong>Pedido:</strong> #{selectedItem.id}</p>
+                  <p><strong>Cliente:</strong> {selectedItem.cliente || selectedItem.email}</p>
+                  <p><strong>Total:</strong> {formatCurrency(selectedItem.total)}</p>
+                </div>
+              )}
+              {editingType === 'user' && (
+                <div className="delete-details">
+                  <p><strong>Usuario:</strong> {selectedItem.email}</p>
+                  <p><strong>Nombre:</strong> {selectedItem.nombre || 'N/A'}</p>
+                </div>
+              )}
+              <div className="modal-actions">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="btn-danger"
+                  onClick={() => {
+                    if (editingType === 'order') {
+                      deleteOrder(selectedItem.id);
+                    } else {
+                      console.log('Eliminar usuario:', selectedItem);
+                      setShowDeleteModal(false);
+                    }
+                  }}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

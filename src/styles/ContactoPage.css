@@ -16,10 +16,12 @@
   text-align: center;
 }
 
-.contacto-hero h1 {
+.contacto-page .contacto-hero h1 {
   font-family: "Pacifico", cursive;
   font-size: 3.5rem;
   margin-bottom: 1rem;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .contacto-hero p {

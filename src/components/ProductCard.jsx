@@ -1,32 +1,32 @@
 import React, { useState } from "react";
 import { useCart } from "../contexts/CartContext";
-import { useAuth } from "../contexts/AuthContext";
+import { useAlert } from "../contexts/AlertContext";
 import "../styles/ProductCard.css";
 
 const ProductCard = ({ producto }) => {
   const { addToCart } = useCart();
-  const { user } = useAuth();
+  const { showAlert } = useAlert();
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleAddToCart = async () => {
-    if (!user) {
-      alert('Debes iniciar sesión para agregar productos al carrito');
-      return;
-    }
-
     if (producto.stock <= 0) {
-      alert('Este producto no tiene stock disponible');
+      showAlert('Este producto no tiene stock disponible', 'error');
       return;
     }
 
     setIsAdding(true);
     try {
-      addToCart(producto, 1);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
+      const success = await addToCart(producto, 1);
+      if (success !== false) {
+        setShowSuccess(true);
+        showAlert(`${producto.nombre} agregado al carrito`, 'success');
+        setTimeout(() => setShowSuccess(false), 2000);
+      }
+      // Si addToCart retorna false, ya se mostró el error en CartContext
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showAlert('Error al agregar producto al carrito', 'error');
     } finally {
       setIsAdding(false);
     }
@@ -80,7 +80,7 @@ const ProductCard = ({ producto }) => {
         <button 
           className={`add-to-cart-btn ${showSuccess ? 'success' : ''}`}
           onClick={handleAddToCart}
-          disabled={isAdding || isOutOfStock || !user}
+          disabled={isAdding || isOutOfStock}
         >
           {showSuccess ? (
             <>
@@ -94,8 +94,6 @@ const ProductCard = ({ producto }) => {
             </>
           ) : isOutOfStock ? (
             'Sin Stock'
-          ) : !user ? (
-            'Inicia Sesión'
           ) : (
             <>
               <span className="cart-icon">🛒</span>

@@ -102,11 +102,16 @@ const ProductManagerPage = () => {
       if (editingProduct) {
         // Actualizar producto existente
         const updatedProduct = await apiService.updateProduct(editingProduct.id, productData);
+        // Actualizar producto en el estado local
         setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
+        // Refrescar la lista completa para asegurar consistencia
+        await loadProducts();
       } else {
         // Crear nuevo producto
         const newProduct = await apiService.createProduct(productData);
         setProducts([...products, newProduct]);
+        // Refrescar la lista completa para asegurar consistencia
+        await loadProducts();
       }
       setShowModal(false);
       setEditingProduct(null);
@@ -118,9 +123,12 @@ const ProductManagerPage = () => {
   const handleUpdateStock = async (productId, newStock) => {
     try {
       await apiService.updateStock(productId, newStock, 'set');
+      // Actualizar stock en el estado local
       setProducts(products.map(p => 
         p.id === productId ? { ...p, stock: newStock } : p
       ));
+      // Refrescar la lista completa para asegurar consistencia
+      await loadProducts();
     } catch (err) {
       setError('Error al actualizar stock: ' + err.message);
     }

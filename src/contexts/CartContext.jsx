@@ -70,15 +70,38 @@ const cartReducer = (state, action) => {
       
       let newItems;
       if (existingItemIndex >= 0) {
-        // Si el producto ya existe, incrementar cantidad
-        newItems = state.items.map((item, index) =>
-          index === existingItemIndex
-            ? { ...item, cantidad: item.cantidad + action.payload.cantidad }
-            : item
-        );
+        // Si el producto ya existe, verificar stock antes de incrementar
+        const existingItem = state.items[existingItemIndex];
+        const newQuantity = existingItem.cantidad + action.payload.cantidad;
+        const availableStock = action.payload.producto.stock || 0;
+        
+        if (availableStock > 0 && newQuantity <= availableStock) {
+          newItems = state.items.map((item, index) =>
+            index === existingItemIndex
+              ? { ...item, cantidad: newQuantity }
+              : item
+          );
+        } else {
+          // No se puede agregar más, retornar estado actual con error
+          return {
+            ...state,
+            error: `Stock insuficiente. Solo quedan ${availableStock} unidades disponibles.`
+          };
+        }
       } else {
-        // Si es un producto nuevo, agregarlo
-        newItems = [...state.items, action.payload];
+        // Si es un producto nuevo, verificar stock
+        const availableStock = action.payload.producto.stock || 0;
+        
+        if (availableStock > 0 && action.payload.cantidad <= availableStock) {
+          newItems = [...state.items, action.payload];
+        } else {
+          return {
+            ...state,
+            error: availableStock === 0 
+              ? 'Este producto está agotado.' 
+              : `Stock insuficiente. Solo quedan ${availableStock} unidades disponibles.`
+          };
+        }
       }
       
       // Guardar en localStorage
@@ -90,7 +113,8 @@ const cartReducer = (state, action) => {
         totalItems: newItems.reduce((total, item) => total + item.cantidad, 0),
         totalPrice: newItems.reduce((total, item) => 
           total + (item.producto.precio * item.cantidad), 0
-        )
+        ),
+        error: null // Limpiar error en caso de éxito
       };
     
     case 'REMOVE_ITEM':
@@ -175,24 +199,64 @@ export const CartProvider = ({ children }) => {
     }
   }, [user, state.items.length]);
 
-  // Funciones del carrito
-  const addToCart = (product, quantity = 1) => {
-    if (!user) {
+  // Verificar stock de un producto
+  const checkProductStock = async (productId) => {
+    try {
+      const response = await fetch(`http://168.197.50.14:8080/api/productos/${productId}/stock`);
+      if (response.ok) {
+        const stockData = await response.json();
+        return stockData.stock || 0;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error verificando stock:', error);
+      return 0;
+    }
+  };
+
+  // Funciones del carrito (funciona para usuarios logueados y no logueados)
+  const addToCart = async (product, quantity = 1) => {
+    try {
+      // Verificar stock actual del producto
+      const currentStock = await checkProductStock(product.id);
+      
+      if (currentStock === 0) {
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: `El producto "${product.nombre}" está agotado.` 
+        });
+        return false;
+      }
+
+      // Verificar si ya existe en el carrito
+      const existingItem = state.items.find(item => item.producto.id === product.id);
+      const totalQuantityRequested = (existingItem?.cantidad || 0) + quantity;
+
+      if (totalQuantityRequested > currentStock) {
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: `Stock insuficiente para "${product.nombre}". Solo quedan ${currentStock} unidades disponibles.` 
+        });
+        return false;
+      }
+
+      const cartItem = {
+        producto: { ...product, stock: currentStock },
+        cantidad: quantity,
+        precioUnitario: product.precio,
+        subtotal: product.precio * quantity
+      };
+
+      dispatch({ type: 'ADD_ITEM', payload: cartItem });
+      return true;
+    } catch (error) {
+      console.error('Error agregando al carrito:', error);
       dispatch({ 
         type: 'SET_ERROR', 
-        payload: 'Debes iniciar sesión para agregar productos al carrito' 
+        payload: 'Error al agregar producto al carrito.' 
       });
-      return;
+      return false;
     }
-
-    const cartItem = {
-      producto: product,
-      cantidad: quantity,
-      precioUnitario: product.precio,
-      subtotal: product.precio * quantity
-    };
-
-    dispatch({ type: 'ADD_ITEM', payload: cartItem });
   };
 
   const removeFromCart = (productId) => {
@@ -215,29 +279,151 @@ export const CartProvider = ({ children }) => {
   };
 
   // Crear pedido en el backend
-  const createOrder = async (descuento = 0) => {
-    if (!user || state.items.length === 0) {
-      throw new Error('No hay items en el carrito o usuario no autenticado');
+  const createOrder = async (descuento = 0, guestInfo = null) => {
+    if (state.items.length === 0) {
+      throw new Error('No hay items en el carrito');
+    }
+
+    // Validar si el usuario está logueado o si se proporcionó información de invitado
+    if (!user && !guestInfo) {
+      throw new Error('Debes iniciar sesión o proporcionar tus datos para realizar el pedido');
     }
 
     dispatch({ type: 'SET_LOADING', payload: true });
 
     try {
+      // Verificar stock de todos los productos antes de crear el pedido
+      for (const item of state.items) {
+        const currentStock = await checkProductStock(item.producto.id);
+        if (currentStock < item.cantidad) {
+          throw new Error(`Stock insuficiente para "${item.producto.nombre}". Solo quedan ${currentStock} unidades.`);
+        }
+      }
+
+      let userEmail = user ? user.email : null;
+
+      // Si hay un usuario logueado, asegurar que existe en la API
+      if (user && user.email) {
+        try {
+          console.log('🔍 Verificando usuario en API:', user.email);
+          const response = await fetch(`http://168.197.50.14:8080/api/usuarios/email/${encodeURIComponent(user.email)}`);
+          
+          if (!response.ok) {
+            console.log('⚠️ Usuario no encontrado en API, creándolo automáticamente...');
+            // Intentar crear el usuario automáticamente
+            const newUserData = {
+              email: user.email,
+              nombre: user.displayName?.split(' ')[0] || user.nombre || 'Usuario',
+              apellido: user.displayName?.split(' ').slice(1).join(' ') || user.apellido || '',
+              password: 'firebase_auth_user',
+              telefono: user.telefono || '',
+              userType: user.userType || 'customer'
+            };
+
+            const createResponse = await fetch('http://168.197.50.14:8080/api/usuarios/registro', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(newUserData)
+            });
+
+            if (createResponse.ok) {
+              console.log('✅ Usuario creado exitosamente en API');
+            } else {
+              console.warn('⚠️ No se pudo crear usuario en API, continuando con pedido de invitado');
+              // Si no se puede crear el usuario, proceder como invitado
+              userEmail = null;
+              guestInfo = {
+                nombre: user.displayName?.split(' ')[0] || user.nombre || 'Usuario',
+                email: user.email,
+                telefono: user.telefono || ''
+              };
+            }
+          } else {
+            console.log('✅ Usuario verificado en API');
+          }
+        } catch (verifyError) {
+          console.warn('⚠️ Error al verificar usuario, procediendo como invitado:', verifyError);
+          // En caso de error, proceder como invitado
+          userEmail = null;
+          guestInfo = {
+            nombre: user.displayName?.split(' ')[0] || user.nombre || 'Usuario',
+            email: user.email,
+            telefono: user.telefono || ''
+          };
+        }
+      }
+
+      // Si es usuario invitado, asegurar que el usuario exista en la API
+      if (!user && guestInfo) {
+        try {
+          console.log('📝 Creando usuario invitado en API:', guestInfo.email);
+          const guestUserData = {
+            email: guestInfo.email,
+            nombre: guestInfo.nombre,
+            apellido: guestInfo.apellido || '',
+            password: 'guest123',
+            telefono: guestInfo.telefono || '',
+            userType: 'customer'
+          };
+
+          const registerResponse = await fetch('http://168.197.50.14:8080/api/usuarios/registro', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(guestUserData)
+          });
+
+          if (registerResponse.ok) {
+            console.log('✅ Usuario invitado creado exitosamente');
+            userEmail = guestInfo.email;
+          } else {
+            // Si el usuario ya existe, simplemente usar su email
+            console.log('ℹ️ Usuario invitado ya existe, usando email existente');
+            userEmail = guestInfo.email;
+          }
+        } catch (error) {
+          console.warn('⚠️ Error al crear usuario invitado, usando email directamente:', error);
+          userEmail = guestInfo.email;
+        }
+      }
+
+      // Validación final: asegurar que tenemos un email válido
+      if (!userEmail) {
+        throw new Error('No se pudo determinar el usuario para el pedido. Por favor, inicia sesión o proporciona tus datos.');
+      }
+
+      console.log('📦 Creando pedido con email:', userEmail);
+
       const orderData = {
-        clienteEmail: user.email,
+        emailUsuario: userEmail,
+        fechaEntrega: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Mañana por defecto
         items: state.items.map(item => ({
-          productoId: item.producto.id,
+          productId: item.producto.id,
           cantidad: item.cantidad,
-          precioUnitario: item.producto.precio,
-          subtotal: item.producto.precio * item.cantidad
-        })),
-        descuento: descuento,
-        total: state.totalPrice - descuento,
-        estado: 'PENDIENTE',
-        notas: ''
+          mensajePersonalizado: item.mensaje || ''
+        }))
       };
 
-      const createdOrder = await apiService.createOrder(orderData);
+      console.log('📦 Datos del pedido:', orderData);
+
+      // Crear pedido en la API
+      const response = await fetch('http://168.197.50.14:8080/api/pedidos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al crear el pedido');
+      }
+
+      const createdOrder = await response.json();
       
       dispatch({ type: 'SET_CURRENT_ORDER', payload: createdOrder.id });
       dispatch({ type: 'CLEAR_CART' });
@@ -266,7 +452,8 @@ export const CartProvider = ({ children }) => {
     clearCart,
     clearError,
     createOrder,
-    getTotalWithDiscount
+    getTotalWithDiscount,
+    checkProductStock
   };
 
   return (

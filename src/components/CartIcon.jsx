@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../contexts/AuthContext';
 import CartModal from './CartModal';
 import '../styles/CartIcon.css';
 
 const CartIcon = () => {
   const { totalItems, error, clearError } = useCart();
-  const { user } = useAuth();
   const [showCartModal, setShowCartModal] = useState(false);
-
-  if (!user) {
-    return null; // No mostrar carrito si no hay usuario autenticado
-  }
 
   const handleCartClick = () => {
     if (error) {

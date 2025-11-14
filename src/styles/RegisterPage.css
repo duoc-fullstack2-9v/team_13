@@ -65,6 +65,8 @@
   margin-bottom: 20px;
   font-size: 1.5rem;
   text-align: center;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .benefits-list {
@@ -91,12 +93,16 @@
 .benefit-text strong {
   display: block;
   margin-bottom: 5px;
+  color: #ffffff !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .benefit-text p {
   margin: 0;
-  opacity: 0.9;
+  opacity: 0.95;
   font-size: 0.9rem;
+  color: #ffffff !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 968px) {

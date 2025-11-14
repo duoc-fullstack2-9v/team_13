@@ -1,5 +1,7 @@
 // API Service para conectar con pasteleria-api
-const API_BASE_URL = 'http://localhost:8080';
+// 🚀 CONFIGURACIÓN AUTOMÁTICA - Detecta entorno automáticamente
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://168.197.50.14:8080';  // VPS por defecto
+// Para desarrollo local, cambiar a: 'http://localhost:8080'
 
 class ApiService {
   constructor() {
@@ -98,7 +100,7 @@ class ApiService {
   }
 
   async getOrdersByUser(userEmail) {
-    return this.request(`/api/pedidos/cliente/${encodeURIComponent(userEmail)}`);
+    return this.request(`/api/pedidos/usuario/${encodeURIComponent(userEmail)}`);
   }
 
   async getOrder(orderId) {
@@ -151,6 +153,11 @@ class ApiService {
     return response.usuarios || [];
   }
 
+  async getUserByEmail(email) {
+    const response = await this.request(`/api/usuarios/email/${encodeURIComponent(email)}`);
+    return response.usuario || null;
+  }
+
   async createUser(userData) {
     return this.request('/api/usuarios/registro', {
       method: 'POST',
@@ -165,15 +172,26 @@ class ApiService {
     return response.pedidos || [];
   }
 
-  // VENTAS - métodos adicionales para admin
+  // VENTAS - métodos adicionales para admin (usar pedidos completados como ventas)
   async getAllSales() {
-    const response = await this.request('/api/ventas');
-    // La API devuelve {ventas: [...]}
-    return response.ventas || [];
+    const response = await this.request('/api/pedidos');
+    // Filtrar solo pedidos entregados como "ventas"
+    const pedidos = response.pedidos || [];
+    return pedidos.filter(pedido => pedido.estado === 'ENTREGADO');
   }
 
   async getSalesStats() {
-    return this.request('/api/ventas/estadisticas');
+    // Calcular estadísticas desde los pedidos
+    const orders = await this.getAllOrders();
+    const sales = orders.filter(order => order.estado === 'ENTREGADO');
+    const totalSales = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+    
+    return {
+      totalSales,
+      totalOrders: sales.length,
+      averageOrderValue: sales.length > 0 ? totalSales / sales.length : 0,
+      salesByMonth: {} // Se puede expandir más tarde
+    };
   }
 
   async getSalesReport(startDate, endDate) {

@@ -100,6 +100,13 @@
   transition: border-color 0.3s ease;
 }
 
+/* Styling for number inputs (stock, stock mínimo) */
+.form-group input[type="number"] {
+  min-width: 120px;
+  font-weight: 600;
+  text-align: center;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -125,10 +132,17 @@
   color: #666;
   font-weight: 600;
   z-index: 1;
+  font-size: 1rem;
 }
 
 .price-input input {
   padding-left: 32px;
+  min-width: 150px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #884513;
+  text-align: right;
+  padding-right: 16px;
 }
 
 .error-text {

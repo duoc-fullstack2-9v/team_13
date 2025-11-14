@@ -16,17 +16,21 @@
   text-align: center;
 }
 
-.nosotros-hero h1 {
+.nosotros-page .nosotros-hero h1 {
   font-family: "Pacifico", cursive;
   font-size: 3.5rem;
   margin-bottom: 1rem;
+  color: #ffffff !important;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
 }
 
-.nosotros-hero p {
+.nosotros-page .nosotros-hero p {
   font-size: 1.2rem;
   max-width: 600px;
   margin: 0 auto;
-  opacity: 0.9;
+  opacity: 0.95;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 /* Historia Section */
@@ -44,9 +48,10 @@
 
 .historia-text h2 {
   font-family: "Pacifico", cursive;
-  color: #884513;
+  color: #663311;
   font-size: 2.5rem;
   margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .historia-text p {
@@ -89,10 +94,11 @@
 
 .valores-section h2 {
   font-family: "Pacifico", cursive;
-  color: #884513;
+  color: #663311;
   font-size: 2.5rem;
   text-align: center;
   margin-bottom: 3rem;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .valores-grid {
@@ -140,10 +146,11 @@
 
 .equipo-section h2 {
   font-family: "Pacifico", cursive;
-  color: #884513;
+  color: #663311;
   font-size: 2.5rem;
   text-align: center;
   margin-bottom: 1rem;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .equipo-intro {

@@ -104,7 +104,7 @@
 
 .cart-item {
   display: grid;
-  grid-template-columns: 80px 1fr auto auto;
+  grid-template-columns: 70px 1fr auto auto;
   gap: 1rem;
   padding: 1rem;
   border-bottom: 1px solid #e9ecef;
@@ -116,25 +116,33 @@
 }
 
 .item-image {
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   border-radius: 8px;
   overflow: hidden;
   background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid #e9ecef;
+  flex-shrink: 0;
 }
 
 .item-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.item-image:hover img {
+  transform: scale(1.05);
 }
 
 .placeholder-image {
-  font-size: 2rem;
+  font-size: 1.8rem;
   color: #6c757d;
+  opacity: 0.7;
 }
 
 .item-details h4 {
@@ -414,5 +422,185 @@
   .btn-clear-cart, .btn-create-order {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Estilos para mensajes de error */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #ffebee;
+  border: 1px solid #ff6b6b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: #c62828;
+  font-weight: 500;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.error-close {
+  background: none;
+  border: none;
+  color: #c62828;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.error-close:hover {
+  color: #b71c1c;
+}
+
+/* Estilos para el formulario de invitado */
+.guest-form-modal {
+  max-width: 500px;
+}
+
+.guest-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: #884513;
+  color: white;
+}
+
+.guest-form-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.guest-form-content {
+  padding: 2rem;
+}
+
+.guest-form-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #5d4037;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #884513;
+  box-shadow: 0 0 0 3px rgba(136, 69, 19, 0.1);
+}
+
+.guest-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-secondary {
+  background: white;
+  color: #884513;
+  border: 2px solid #884513;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #884513;
+  color: white;
+}
+
+.btn-secondary:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  border-color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #884513 0%, #5d4037 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(136, 69, 19, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.guest-form-note {
+  text-align: center;
+  color: #666;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #884513;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0;
+}
+
+.link-btn:hover {
+  color: #5d4037;
+}
+
+/* Responsive para formulario de invitado */
+@media (max-width: 768px) {
+  .guest-form-actions {
+    flex-direction: column;
+  }
+  
+  .guest-form-content {
+    padding: 1.5rem;
   }
 }

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useAlert } from '../contexts/AlertContext';
+import LoginForm from './LoginForm';
 import '../styles/CartModal.css';
 
 const CartModal = ({ onClose }) => {
@@ -13,14 +15,24 @@ const CartModal = ({ onClose }) => {
     clearCart, 
     createOrder,
     getTotalWithDiscount,
-    isLoading 
+    isLoading,
+    error,
+    clearError 
   } = useCart();
   
   const { user } = useAuth();
+  const { showSuccess, showError } = useAlert();
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestInfo, setGuestInfo] = useState({
+    nombre: '',
+    email: '',
+    telefono: ''
+  });
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -33,6 +45,12 @@ const CartModal = ({ onClose }) => {
   const handleCreateOrder = async () => {
     if (items.length === 0) return;
     
+    // Si no hay usuario logueado, mostrar opciones
+    if (!user) {
+      setShowGuestForm(true);
+      return;
+    }
+    
     setIsProcessing(true);
     try {
       const order = await createOrder(discount);
@@ -42,9 +60,44 @@ const CartModal = ({ onClose }) => {
       }, 2000);
     } catch (error) {
       console.error('Error creating order:', error);
+      showError('Error al crear el pedido: ' + error.message);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleGuestOrder = async () => {
+    if (!guestInfo.nombre || !guestInfo.email || !guestInfo.telefono) {
+      showError('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(guestInfo.email)) {
+      showError('Por favor ingresa un email válido');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const order = await createOrder(discount, guestInfo);
+      setOrderSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error('Error creating guest order:', error);
+      showError('Error al crear el pedido: ' + error.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGuestInfoChange = (field, value) => {
+    setGuestInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handleOverlayClick = (e) => {
@@ -52,6 +105,104 @@ const CartModal = ({ onClose }) => {
       onClose();
     }
   };
+
+  // Modal de login
+  if (showLogin) {
+    return (
+      <div className="modal-overlay" onClick={handleOverlayClick}>
+        <LoginForm 
+          onSuccess={() => {
+            setShowLogin(false);
+            // El pedido se creará automáticamente después del login
+          }}
+          onError={(error) => {
+            console.error('Error en login:', error);
+          }}
+          onClose={() => setShowLogin(false)}
+        />
+      </div>
+    );
+  }
+
+  // Modal de información de invitado
+  if (showGuestForm) {
+    return (
+      <div className="modal-overlay" onClick={handleOverlayClick}>
+        <div className="cart-modal guest-form-modal">
+          <div className="guest-form-header">
+            <h3>📝 Información para tu pedido</h3>
+            <button className="close-btn" onClick={() => setShowGuestForm(false)}>×</button>
+          </div>
+          
+          <div className="guest-form-content">
+            <p className="guest-form-description">
+              Para procesar tu pedido necesitamos algunos datos básicos:
+            </p>
+            
+            <div className="form-group">
+              <label>Nombre completo *</label>
+              <input
+                type="text"
+                value={guestInfo.nombre}
+                onChange={(e) => handleGuestInfoChange('nombre', e.target.value)}
+                placeholder="Tu nombre completo"
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Email *</label>
+              <input
+                type="email"
+                value={guestInfo.email}
+                onChange={(e) => handleGuestInfoChange('email', e.target.value)}
+                placeholder="tu@email.com"
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Teléfono *</label>
+              <input
+                type="tel"
+                value={guestInfo.telefono}
+                onChange={(e) => handleGuestInfoChange('telefono', e.target.value)}
+                placeholder="9 1234 5678"
+                required
+              />
+            </div>
+            
+            <div className="guest-form-actions">
+              <button 
+                className="btn-secondary"
+                onClick={() => setShowLogin(true)}
+                disabled={isProcessing}
+              >
+                🔐 Iniciar Sesión
+              </button>
+              
+              <button 
+                className="btn-primary"
+                onClick={handleGuestOrder}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Procesando...' : '🛒 Confirmar Pedido'}
+              </button>
+            </div>
+            
+            <p className="guest-form-note">
+              💡 Si ya tienes cuenta, <button 
+                className="link-btn" 
+                onClick={() => setShowLogin(true)}
+              >
+                inicia sesión aquí
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (orderSuccess) {
     return (
@@ -80,6 +231,14 @@ const CartModal = ({ onClose }) => {
         </div>
 
         <div className="cart-content">
+          {error && (
+            <div className="error-message">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
+              <button className="error-close" onClick={clearError}>×</button>
+            </div>
+          )}
+          
           {items.length === 0 ? (
             <div className="empty-cart">
               <div className="empty-cart-icon">🛒</div>
@@ -95,13 +254,17 @@ const CartModal = ({ onClose }) => {
                 {items.map((item) => (
                   <div key={item.producto.id} className="cart-item">
                     <div className="item-image">
-                      {item.producto.imagenUrl ? (
-                        <img src={item.producto.imagenUrl} alt={item.producto.nombre} />
-                      ) : (
-                        <div className="placeholder-image">
-                          <span>📰</span>
-                        </div>
-                      )}
+                      <img 
+                        src={`/images/productos/${item.producto.codigo}.jpg`} 
+                        alt={item.producto.nombre}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div className="placeholder-image" style={{display: 'none'}}>
+                        <span>🍰</span>
+                      </div>
                     </div>
                     
                     <div className="item-details">
@@ -203,8 +366,10 @@ const CartModal = ({ onClose }) => {
                         <div className="spinner"></div>
                         Procesando...
                       </>
+                    ) : user ? (
+                      '🛒 Confirmar Pedido'
                     ) : (
-                      'Confirmar Pedido'
+                      '🛒 Continuar Pedido'
                     )}
                   </button>
                 </div>

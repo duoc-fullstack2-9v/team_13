@@ -35,7 +35,7 @@ const Header = () => {
                 to="/productos"
                 className={location.pathname === "/productos" ? "active" : ""}
               >
-                🍰 Productos
+                🍰 Catálogo
               </Link>
             </li>
             <li>
@@ -101,7 +101,16 @@ const Header = () => {
                       setShowAdminDropdown(false);
                     }}
                   >
-                    👥 Usuarios
+                    👥 Lista Usuarios
+                  </Link>
+                  <Link 
+                    to="/admin/mantenedor-usuarios"
+                    onClick={() => {
+                      navigate('/admin/mantenedor-usuarios');
+                      setShowAdminDropdown(false);
+                    }}
+                  >
+                    ⚙️ Gestión Usuarios
                   </Link>
                   <Link 
                     to="/admin/ventas"
@@ -150,9 +159,11 @@ const Header = () => {
                     </div>
                   )}
                   <span className="user-name">
-                    ¡Hola, {user.displayName ? 
-                      user.displayName.split(' ').slice(0, 2).join(' ') : 
-                      user.email?.split('@')[0] || 'Usuario'}!
+                    ¡Hola, {user.nombre && user.apellido ? 
+                      `${user.nombre} ${user.apellido}` : 
+                      user.displayName ? 
+                        user.displayName.split(' ').slice(0, 2).join(' ') : 
+                        user.email?.split('@')[0] || 'Usuario'}!
                   </span>
                 </li>
                 <li>
@@ -168,23 +179,38 @@ const Header = () => {
                 </li>
               </>
             ) : (
-              <li className="auth-buttons">
-                <button 
-                  onClick={signInWithGoogle}
-                  className="google-login-btn"
-                >
-                  <span className="google-icon">G</span>
-                  Iniciar con Google
-                </button>
-                <Link
-                  to="/registro"
-                  className={`register-btn-nav ${
-                    location.pathname === "/registro" ? "active" : ""
-                  }`}
-                >
-                  Registrarse
-                </Link>
-              </li>
+              <>
+                <li>
+                  <CartIcon />
+                </li>
+                <li className="auth-buttons">
+                  <Link
+                    to="/login"
+                    className={`login-btn-nav ${
+                      location.pathname === "/login" ? "active" : ""
+                    }`}
+                  >
+                    🔐 Iniciar Sesión
+                  </Link>
+                  <Link
+                    to="/registro"
+                    className={`register-btn-nav ${
+                      location.pathname === "/registro" ? "active" : ""
+                    }`}
+                  >
+                    ✨ Registrarse
+                  </Link>
+                </li>
+                <li className="google-auth">
+                  <button 
+                    onClick={signInWithGoogle}
+                    className="google-login-btn"
+                    title="Iniciar sesión con Google"
+                  >
+                    <span className="google-icon">G</span>
+                  </button>
+                </li>
+              </>
             )}
           </ul>
         </nav>

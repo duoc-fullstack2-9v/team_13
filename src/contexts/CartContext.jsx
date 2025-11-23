@@ -202,12 +202,7 @@ export const CartProvider = ({ children }) => {
   // Verificar stock de un producto
   const checkProductStock = async (productId) => {
     try {
-      const response = await fetch(`http://168.197.50.14:8080/api/productos/${productId}/stock`);
-      if (response.ok) {
-        const stockData = await response.json();
-        return stockData.stock || 0;
-      }
-      return 0;
+      return await apiService.getProductStock(productId);
     } catch (error) {
       console.error('Error verificando stock:', error);
       return 0;
@@ -278,8 +273,72 @@ export const CartProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  const ensureUserExistsInApi = async (payload) => {
+    if (!payload?.email) return;
+    const splitFullName = (fullName = '', fallbackFirst = 'Usuario', fallbackLast = 'Invitado') => {
+      const parts = fullName.trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) {
+        return { first: fallbackFirst, last: fallbackLast };
+      }
+      const first = parts[0];
+      const last = parts.slice(1).join(' ') || fallbackLast;
+      return { first, last };
+    };
+    
+    const baseFullName = `${payload.nombre || ''} ${payload.apellido || ''}`.trim() || payload.displayName || '';
+    const { first, last } = splitFullName(
+      baseFullName,
+      payload.nombre?.trim() || 'Usuario',
+      payload.apellido?.trim() || 'Invitado'
+    );
+    
+    const sanitizedPayload = {
+      email: payload.email,
+      nombre: payload.nombre?.trim() || first,
+      apellido: payload.apellido?.trim() || last,
+      telefono: payload.telefono?.trim() || '000000000',
+      userType: payload.userType || 'customer',
+      password: payload.password || 'guest123',
+      edad: Number.isFinite(Number(payload.edad)) && Number(payload.edad) > 0
+        ? Number(payload.edad)
+        : 25,
+      esEstudianteDuoc: typeof payload.esEstudianteDuoc === 'boolean'
+        ? payload.esEstudianteDuoc
+        : false
+    };
+    try {
+      const apiUser = await apiService.getUserByEmail(payload.email);
+      if (apiUser) {
+        return;
+      }
+    } catch (getError) {
+      if (getError.status && getError.status !== 404) {
+        console.warn('⚠️ Error consultando usuario en API:', getError);
+        return;
+      }
+    }
+
+    let creationStatus = null;
+    try {
+      await apiService.createUser(sanitizedPayload);
+    } catch (createError) {
+      creationStatus = createError.status || null;
+      if (!createError.status || createError.status !== 409) {
+        console.warn('⚠️ Error al registrar usuario en API:', createError);
+      }
+    }
+    
+    if (creationStatus === null || creationStatus === 409) {
+      try {
+        await apiService.getUserByEmail(sanitizedPayload.email);
+      } catch (verifyError) {
+        console.warn('⚠️ Error verificando usuario tras registro:', verifyError);
+      }
+    }
+  };
+
   // Crear pedido en el backend
-  const createOrder = async (descuento = 0, guestInfo = null) => {
+  const createOrder = async (_discount = 0, guestInfo = null, extraData = {}) => {
     if (state.items.length === 0) {
       throw new Error('No hay items en el carrito');
     }
@@ -300,94 +359,37 @@ export const CartProvider = ({ children }) => {
         }
       }
 
-      let userEmail = user ? user.email : null;
+      const normalizeEmail = (email) => (email || '').trim().toLowerCase();
+      const guestDetails = guestInfo ? {
+        ...guestInfo,
+        email: normalizeEmail(guestInfo.email)
+      } : null;
+      let userEmail = user ? normalizeEmail(user.email) : guestDetails?.email || null;
 
       // Si hay un usuario logueado, asegurar que existe en la API
       if (user && user.email) {
-        try {
-          console.log('🔍 Verificando usuario en API:', user.email);
-          const response = await fetch(`http://168.197.50.14:8080/api/usuarios/email/${encodeURIComponent(user.email)}`);
-          
-          if (!response.ok) {
-            console.log('⚠️ Usuario no encontrado en API, creándolo automáticamente...');
-            // Intentar crear el usuario automáticamente
-            const newUserData = {
-              email: user.email,
-              nombre: user.displayName?.split(' ')[0] || user.nombre || 'Usuario',
-              apellido: user.displayName?.split(' ').slice(1).join(' ') || user.apellido || '',
-              password: 'firebase_auth_user',
-              telefono: user.telefono || '',
-              userType: user.userType || 'customer'
-            };
-
-            const createResponse = await fetch('http://168.197.50.14:8080/api/usuarios/registro', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(newUserData)
-            });
-
-            if (createResponse.ok) {
-              console.log('✅ Usuario creado exitosamente en API');
-            } else {
-              console.warn('⚠️ No se pudo crear usuario en API, continuando con pedido de invitado');
-              // Si no se puede crear el usuario, proceder como invitado
-              userEmail = null;
-              guestInfo = {
-                nombre: user.displayName?.split(' ')[0] || user.nombre || 'Usuario',
-                email: user.email,
-                telefono: user.telefono || ''
-              };
-            }
-          } else {
-            console.log('✅ Usuario verificado en API');
-          }
-        } catch (verifyError) {
-          console.warn('⚠️ Error al verificar usuario, procediendo como invitado:', verifyError);
-          // En caso de error, proceder como invitado
-          userEmail = null;
-          guestInfo = {
-            nombre: user.displayName?.split(' ')[0] || user.nombre || 'Usuario',
-            email: user.email,
-            telefono: user.telefono || ''
-          };
-        }
+        const normalizedUserEmail = normalizeEmail(user.email);
+        const nameParts = user.displayName?.split(' ') || [];
+        await ensureUserExistsInApi({
+          email: normalizedUserEmail,
+          nombre: user.nombre || nameParts[0] || 'Usuario',
+          apellido: user.apellido || nameParts.slice(1).join(' ') || '',
+          password: 'firebase_auth_user',
+          telefono: user.telefono || '',
+          userType: user.userType || 'customer'
+        });
       }
 
       // Si es usuario invitado, asegurar que el usuario exista en la API
-      if (!user && guestInfo) {
-        try {
-          console.log('📝 Creando usuario invitado en API:', guestInfo.email);
-          const guestUserData = {
-            email: guestInfo.email,
-            nombre: guestInfo.nombre,
-            apellido: guestInfo.apellido || '',
-            password: 'guest123',
-            telefono: guestInfo.telefono || '',
-            userType: 'customer'
-          };
-
-          const registerResponse = await fetch('http://168.197.50.14:8080/api/usuarios/registro', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(guestUserData)
-          });
-
-          if (registerResponse.ok) {
-            console.log('✅ Usuario invitado creado exitosamente');
-            userEmail = guestInfo.email;
-          } else {
-            // Si el usuario ya existe, simplemente usar su email
-            console.log('ℹ️ Usuario invitado ya existe, usando email existente');
-            userEmail = guestInfo.email;
-          }
-        } catch (error) {
-          console.warn('⚠️ Error al crear usuario invitado, usando email directamente:', error);
-          userEmail = guestInfo.email;
-        }
+      if (!user && guestDetails) {
+        await ensureUserExistsInApi({
+          email: guestDetails.email,
+          nombre: guestDetails.nombre,
+          apellido: guestDetails.apellido || '',
+          password: 'guest123',
+          telefono: guestDetails.telefono || '',
+          userType: 'customer'
+        });
       }
 
       // Validación final: asegurar que tenemos un email válido
@@ -395,39 +397,68 @@ export const CartProvider = ({ children }) => {
         throw new Error('No se pudo determinar el usuario para el pedido. Por favor, inicia sesión o proporciona tus datos.');
       }
 
-      console.log('📦 Creando pedido con email:', userEmail);
+      const normalizeIsoDate = (rawDate) => {
+        const fallbackDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const parsed = rawDate ? new Date(rawDate) : fallbackDate;
+        const validDate = isNaN(parsed.getTime()) ? fallbackDate : parsed;
+        // API espera formato ISO_LOCAL_DATE_TIME (YYYY-MM-DDTHH:mm:ss)
+        return validDate.toISOString().split('.')[0];
+      };
 
       const orderData = {
         emailUsuario: userEmail,
-        fechaEntrega: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Mañana por defecto
+        usuarioEmail: userEmail, // compatibilidad con APIs previas
+        fechaEntrega: normalizeIsoDate(extraData.fechaEntrega),
+        observaciones: typeof extraData.observaciones === 'string'
+          ? extraData.observaciones.trim()
+          : '',
         items: state.items.map(item => ({
           productId: item.producto.id,
           cantidad: item.cantidad,
           mensajePersonalizado: item.mensaje || ''
+        })),
+        productos: state.items.map(item => ({
+          productId: item.producto.id,
+          cantidad: item.cantidad,
+          mensaje: item.mensaje || ''
         }))
       };
 
-      console.log('📦 Datos del pedido:', orderData);
+      const normalizeOrderResponse = (orderResponse) => {
+        return orderResponse?.pedido || orderResponse;
+      };
 
-      // Crear pedido en la API
-      const response = await fetch('http://168.197.50.14:8080/api/pedidos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
-      });
+      const createOrRetryOrder = async () => {
+        try {
+          return normalizeOrderResponse(await apiService.createOrder(orderData));
+        } catch (orderError) {
+          const errorMessage = (orderError?.data?.message || orderError.message || '').toLowerCase();
+          const shouldRetry = errorMessage.includes('usuario') && errorMessage.includes('no encontrado');
+          
+          if (!shouldRetry) {
+            throw orderError;
+          }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear el pedido');
-      }
+          // Intentar registrar nuevamente y reintentar pedido
+          const userDisplayParts = user?.displayName ? user.displayName.split(' ') : [];
+          const fallbackUserData = {
+            email: userEmail,
+            nombre: guestDetails?.nombre || user?.nombre || userDisplayParts[0] || 'Usuario',
+            apellido: guestDetails?.apellido || user?.apellido || userDisplayParts.slice(1).join(' ') || '',
+            password: user ? 'firebase_auth_user' : 'guest123',
+            telefono: guestDetails?.telefono || user?.telefono || '',
+            userType: user?.userType || 'customer'
+          };
 
-      const createdOrder = await response.json();
+          await ensureUserExistsInApi(fallbackUserData);
+          return normalizeOrderResponse(await apiService.createOrder(orderData));
+        }
+      };
+
+      const createdOrder = await createOrRetryOrder();
       
-      dispatch({ type: 'SET_CURRENT_ORDER', payload: createdOrder.id });
+      dispatch({ type: 'SET_CURRENT_ORDER', payload: createdOrder?.id });
       dispatch({ type: 'CLEAR_CART' });
-      dispatch({ type: 'SET_LOADING', payload: false });
       
       return createdOrder;
     } catch (error) {
@@ -436,6 +467,8 @@ export const CartProvider = ({ children }) => {
         payload: 'Error al crear el pedido: ' + error.message 
       });
       throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 

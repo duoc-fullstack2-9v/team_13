@@ -20,6 +20,10 @@ const ProductosPage = () => {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    setCategoriaActiva(categoria || "todos");
+  }, [categoria]);
+
   const loadProducts = async () => {
     try {
       setIsLoading(true);

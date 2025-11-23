@@ -13,6 +13,37 @@ import apiService from '../services/apiService';
 
 const AuthContext = createContext();
 
+const DEFAULT_USER_AGE = 25;
+
+const calculateAgeFromBirthdate = (dateString) => {
+  if (!dateString) return null;
+  const parsed = new Date(dateString);
+  if (isNaN(parsed.getTime())) return null;
+  const diffMs = Date.now() - parsed.getTime();
+  const ageDate = new Date(diffMs);
+  const calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+  return calculatedAge > 0 ? calculatedAge : null;
+};
+
+const normalizeAgeValue = (value) => {
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue) && numericValue > 0) {
+    return Math.min(110, Math.round(numericValue));
+  }
+  return DEFAULT_USER_AGE;
+};
+
+const resolveUserAge = (profile = {}) => {
+  if (profile.edad !== undefined && profile.edad !== null) {
+    return normalizeAgeValue(profile.edad);
+  }
+  const calculated = calculateAgeFromBirthdate(profile.fechaNacimiento);
+  if (calculated) {
+    return normalizeAgeValue(calculated);
+  }
+  return DEFAULT_USER_AGE;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -48,6 +79,7 @@ export const AuthProvider = ({ children }) => {
             console.warn('⚠️ Usuario no existe en API, creándolo automáticamente...');
             // Si el usuario no existe en la API, crearlo automáticamente
             try {
+              const resolvedAge = resolveUserAge(userData || {});
               const newUserData = {
                 email: firebaseUser.email,
                 nombre: firebaseUser.displayName?.split(' ')[0] || userData.nombre || 'Usuario',
@@ -55,7 +87,9 @@ export const AuthProvider = ({ children }) => {
                 password: 'firebase_auth_user', // Password temporal para usuarios de Firebase
                 telefono: userData.telefono || '',
                 fechaNacimiento: userData.fechaNacimiento || null,
-                userType: userType
+                userType: userType,
+                edad: resolvedAge,
+                esEstudianteDuoc: Boolean(userData?.esEstudianteDuoc ?? false)
               };
               
               console.log('📝 Creando usuario en API:', newUserData);
@@ -71,7 +105,9 @@ export const AuthProvider = ({ children }) => {
                   nombre: 'Usuario',
                   apellido: 'Firebase',
                   password: 'temp123',
-                  userType: userType
+                  userType: userType,
+                  edad: DEFAULT_USER_AGE,
+                  esEstudianteDuoc: false
                 };
                 console.log('🔄 Reintentando con datos mínimos:', minimalUserData);
                 await apiService.createUser(minimalUserData);

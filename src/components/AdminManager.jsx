@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/AdminManager.css';
 
 const AdminManager = () => {
+  const { user, loading } = useAuth();
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminName, setNewAdminName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  if (loading) {
+    return (
+      <div className="admin-manager">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
+
+  if (!user || !user.isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const addAdmin = async (e) => {
     e.preventDefault();

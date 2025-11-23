@@ -31,6 +31,19 @@ const AdminDashboard = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingType, setEditingType] = useState(null); // 'order', 'user', 'sale'
+  const [actionMessage, setActionMessage] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [isSubmittingSale, setIsSubmittingSale] = useState(false);
+  const [saleForm, setSaleForm] = useState({
+    nombreCliente: '',
+    emailCliente: '',
+    metodoPago: 'EFECTIVO',
+    observaciones: '',
+    items: [
+      { productId: '', cantidad: 1, mensajePersonalizado: '' }
+    ]
+  });
+  const paymentMethods = ['EFECTIVO', 'TARJETA_DEBITO', 'TARJETA_CREDITO', 'TRANSFERENCIA'];
 
   // Verificar autenticación y permisos de admin
   if (loading) {
@@ -48,11 +61,10 @@ const AdminDashboard = () => {
   // Manejar navegación por URL
   useEffect(() => {
     if (tab) {
-      const validTabs = ['dashboard', 'products', 'orders', 'users', 'userManagement', 'sales', 'reports'];
+      const validTabs = ['dashboard', 'products', 'orders', 'userManagement', 'sales', 'reports'];
       const tabMapping = {
         'productos': 'products',
         'pedidos': 'orders', 
-        'usuarios': 'users',
         'mantenedor-usuarios': 'userManagement',
         'ventas': 'sales',
         'reportes': 'reports'
@@ -76,7 +88,6 @@ const AdminDashboard = () => {
       'dashboard': '/admin',
       'products': '/admin/productos',
       'orders': '/admin/pedidos',
-      'users': '/admin/usuarios',
       'userManagement': '/admin/mantenedor-usuarios',
       'sales': '/admin/ventas',
       'reports': '/admin/reportes'
@@ -98,7 +109,10 @@ const AdminDashboard = () => {
       
       // Calcular estadísticas
       const totalSales = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-      const pendingOrders = orders.filter(order => order.estado === 'PENDIENTE').length;
+      const pendingOrders = orders.filter(order => {
+        const status = (order.estado || '').toUpperCase();
+        return status && !['ENTREGADO', 'CANCELADO'].includes(status);
+      }).length;
       
       setData({
         products,
@@ -121,6 +135,125 @@ const AdminDashboard = () => {
     }
   };
 
+  const resetSaleForm = () => {
+    setSaleForm({
+      nombreCliente: '',
+      emailCliente: '',
+      metodoPago: 'EFECTIVO',
+      observaciones: '',
+      items: [
+        { productId: '', cantidad: 1, mensajePersonalizado: '' }
+      ]
+    });
+  };
+
+  const handleSaleFieldChange = (field, value) => {
+    setSaleForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaleItemChange = (index, field, value) => {
+    setSaleForm(prev => ({
+      ...prev,
+      items: prev.items.map((item, idx) => 
+        idx === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const addSaleItem = () => {
+    setSaleForm(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { productId: '', cantidad: 1, mensajePersonalizado: '' }
+      ]
+    }));
+  };
+
+  const removeSaleItem = (index) => {
+    setSaleForm(prev => ({
+      ...prev,
+      items: prev.items.filter((_, idx) => idx !== index)
+    }));
+  };
+
+  const handleSubmitDirectSale = async (event) => {
+    event.preventDefault();
+    setActionError(null);
+    setActionMessage(null);
+
+    const normalizedItems = saleForm.items
+      .map(item => ({
+        productId: Number(item.productId),
+        cantidad: Math.max(1, Number(item.cantidad) || 1),
+        mensajePersonalizado: item.mensajePersonalizado?.trim() || ''
+      }))
+      .filter(item => Number.isFinite(item.productId) && item.productId > 0)
+      .map(item => ({
+        productId: item.productId,
+        cantidad: item.cantidad,
+        ...(item.mensajePersonalizado ? { mensajePersonalizado: item.mensajePersonalizado } : {})
+      }));
+
+    if (normalizedItems.length === 0) {
+      setActionError('Agrega al menos un producto válido para registrar la venta.');
+      return;
+    }
+
+    setIsSubmittingSale(true);
+    try {
+      await apiService.createSale({
+        nombreCliente: saleForm.nombreCliente.trim() || 'Cliente Mostrador',
+        emailCliente: saleForm.emailCliente.trim() || undefined,
+        metodoPago: saleForm.metodoPago,
+        observaciones: saleForm.observaciones.trim() || undefined,
+        items: normalizedItems
+      });
+      setActionMessage('Venta directa registrada correctamente.');
+      resetSaleForm();
+      await loadAllData();
+    } catch (error) {
+      console.error('Error creando venta directa:', error);
+      setActionError('Error al registrar la venta directa: ' + (error.message || 'Inténtalo nuevamente.'));
+    } finally {
+      setIsSubmittingSale(false);
+    }
+  };
+
+  const handleConfirmOrderStatus = async (orderId) => {
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiService.updateOrderStatus(orderId, 'CONFIRMADO');
+      setActionMessage(`Pedido #${orderId} confirmado correctamente.`);
+      await loadAllData();
+    } catch (error) {
+      console.error('Error confirming order:', error);
+      setActionError('No se pudo confirmar el pedido: ' + error.message);
+    }
+  };
+
+  const handleConvertToSale = async (orderId) => {
+    const metodoPago = window.prompt(
+      'Ingresa el método de pago para la venta (EFECTIVO, TARJETA_DEBITO, TARJETA_CREDITO, TRANSFERENCIA)',
+      'EFECTIVO'
+    );
+    if (metodoPago === null) {
+      return;
+    }
+
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiService.convertOrderToSale(orderId, metodoPago.trim().toUpperCase());
+      setActionMessage(`Pedido #${orderId} convertido a venta exitosamente.`);
+      await loadAllData();
+    } catch (error) {
+      console.error('Error converting order to sale:', error);
+      setActionError('No se pudo convertir el pedido a venta: ' + error.message);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -134,16 +267,22 @@ const AdminDashboard = () => {
   };
 
   const getStatusColor = (status) => {
+    const normalized = (status || '').toUpperCase();
     const colors = {
       'PENDIENTE': '#ffc107',
-      'EN_PREPARACION': '#17a2b8',
+      'RECIBIDO': '#6c757d',
+      'CONFIRMADO': '#17a2b8',
+      'EN_PREPARACION': '#fd7e14',
       'LISTO': '#28a745',
-      'ENTREGADO': '#6c757d',
+      'LISTO_PARA_ENTREGA': '#28a745',
+      'EN_TRANSITO': '#20c997',
+      'ENTREGADO': '#6f42c1',
       'CANCELADO': '#dc3545',
+      'COMPLETADA': '#28a745',
       'ACTIVO': '#28a745',
       'INACTIVO': '#6c757d'
     };
-    return colors[status] || '#6c757d';
+    return colors[normalized] || '#6c757d';
   };
 
   // Funciones para manejar CRUD
@@ -156,18 +295,6 @@ const AdminDashboard = () => {
   const handleDeleteOrder = (order) => {
     setSelectedItem(order);
     setEditingType('order');
-    setShowDeleteModal(true);
-  };
-
-  const handleEditUser = (user) => {
-    setSelectedItem(user);
-    setEditingType('user');
-    setShowEditModal(true);
-  };
-
-  const handleDeleteUser = (user) => {
-    setSelectedItem(user);
-    setEditingType('user');
     setShowDeleteModal(true);
   };
 
@@ -200,7 +327,8 @@ const AdminDashboard = () => {
     onDelete, 
     onAdd, 
     actions = true,
-    emptyMessage = "No hay datos disponibles" 
+    emptyMessage = "No hay datos disponibles",
+    renderActions
   }) => (
     <div className="data-table-container">
       <div className="table-header">
@@ -238,12 +366,13 @@ const AdminDashboard = () => {
                   ))}
                   {actions && (
                     <td className="actions">
+                      {renderActions && renderActions(item)}
                       {onEdit && (
                         <button 
                           className="btn-secondary btn-sm"
                           onClick={() => onEdit(item)}
                         >
-                          ✏️
+                          Editar
                         </button>
                       )}
                       {onDelete && (
@@ -251,7 +380,7 @@ const AdminDashboard = () => {
                           className="btn-danger btn-sm"
                           onClick={() => onDelete(item)}
                         >
-                          🗑️
+                          Eliminar
                         </button>
                       )}
                     </td>
@@ -323,9 +452,9 @@ const AdminDashboard = () => {
             <div key={order.id} className="activity-item">
               <div className="activity-icon">📦</div>
               <div className="activity-info">
-                <p><strong>Pedido #{order.id}</strong></p>
-                <p>{order.cliente || order.email} - {formatCurrency(order.total)}</p>
-                <span className="activity-date">{formatDate(order.fechaPedido)}</span>
+                <p><strong>{order.numeroPedido || `Pedido #${order.id}`}</strong></p>
+                <p>{order.emailUsuario || order.usuarioEmail || 'Cliente'} - {formatCurrency(order.total)}</p>
+                <span className="activity-date">{formatDate(order.fechaCreacion)}</span>
               </div>
               <div 
                 className="activity-status"
@@ -375,9 +504,9 @@ const AdminDashboard = () => {
 
   const renderOrders = () => {
     const columns = [
-      { key: 'id', label: 'ID', render: (val) => `#${val}` },
-      { key: 'cliente', label: 'Cliente', render: (val, item) => val || item.email },
-      { key: 'fechaPedido', label: 'Fecha', render: (val) => formatDate(val) },
+      { key: 'numeroPedido', label: 'Pedido', render: (val, item) => val || `#${item.id}` },
+      { key: 'emailUsuario', label: 'Email', render: (val, item) => val || item.usuarioEmail || 'N/A' },
+      { key: 'fechaCreacion', label: 'Fecha', render: (val, item) => formatDate(val || item.fechaPedido) },
       { key: 'total', label: 'Total', render: (val) => formatCurrency(val) },
       { 
         key: 'estado', 
@@ -387,11 +516,16 @@ const AdminDashboard = () => {
             className="status-badge"
             style={{ backgroundColor: getStatusColor(val) }}
           >
-            {(val || '').replace('_', ' ')}
+            {(val || '').replaceAll('_', ' ')}
           </span>
         )
       }
     ];
+
+    const isOrderEditable = (order) => {
+      const status = (order.estado || '').toUpperCase();
+      return !['ENTREGADO', 'CANCELADO'].includes(status);
+    };
 
     return (
       <DataTable
@@ -400,39 +534,39 @@ const AdminDashboard = () => {
         columns={columns}
         onEdit={handleEditOrder}
         onDelete={handleDeleteOrder}
+        renderActions={(order) => (
+          <>
+            {(order.estado || '').toUpperCase() === 'RECIBIDO' && (
+              <button 
+                className="btn-primary btn-sm"
+                onClick={() => handleConfirmOrderStatus(order.id)}
+              >
+                Confirmar
+              </button>
+            )}
+            {isOrderEditable(order) && (
+              <button 
+                className="btn-success btn-sm"
+                onClick={() => handleConvertToSale(order.id)}
+              >
+                Venta
+              </button>
+            )}
+          </>
+        )}
         emptyMessage="No hay pedidos registrados"
-      />
-    );
-  };
-
-  const renderUsers = () => {
-    const columns = [
-      { key: 'id', label: 'ID' },
-      { key: 'email', label: 'Email' },
-      { key: 'nombre', label: 'Nombre', render: (val, item) => val || item.displayName },
-      { key: 'userType', label: 'Tipo', render: (val) => val || 'user' },
-      { key: 'fechaRegistro', label: 'Registro', render: (val) => formatDate(val) }
-    ];
-
-    return (
-      <DataTable
-        title="Usuarios"
-        data={data.users}
-        columns={columns}
-        onEdit={handleEditUser}
-        onDelete={handleDeleteUser}
-        emptyMessage="No hay usuarios registrados"
       />
     );
   };
 
   const renderSales = () => {
     const columns = [
-      { key: 'id', label: 'ID' },
-      { key: 'fecha', label: 'Fecha', render: (val) => formatDate(val) },
-      { key: 'cliente', label: 'Cliente' },
+      { key: 'numeroVenta', label: 'Venta', render: (val, item) => val || `#${item.id}` },
+      { key: 'fechaVenta', label: 'Fecha', render: (val) => formatDate(val) },
+      { key: 'nombreCliente', label: 'Cliente', render: (val) => val || 'Cliente Mostrador' },
+      { key: 'emailCliente', label: 'Email', render: (val) => val || 'N/A' },
+      { key: 'metodoPago', label: 'Pago' },
       { key: 'total', label: 'Total', render: (val) => formatCurrency(val) },
-      { key: 'metodoPago', label: 'Método de Pago' },
       { 
         key: 'estado', 
         label: 'Estado', 
@@ -441,20 +575,124 @@ const AdminDashboard = () => {
             className="status-badge"
             style={{ backgroundColor: getStatusColor(val) }}
           >
-            {(val || '').replace('_', ' ')}
+            {(val || '').replaceAll('_', ' ')}
           </span>
         )
       }
     ];
 
     return (
-      <DataTable
-        title="Ventas"
-        data={data.sales}
-        columns={columns}
-        actions={false}
-        emptyMessage="No hay ventas registradas"
-      />
+      <div className="sales-tab">
+        <div className="direct-sale-card">
+          <div className="section-header">
+            <h2>Registrar venta directa</h2>
+            <p>Selecciona productos y registra una venta presencial sin pasar por el flujo de pedidos.</p>
+          </div>
+          <form className="direct-sale-form" onSubmit={handleSubmitDirectSale}>
+            <div className="sale-form-grid">
+              <div className="form-group">
+                <label>Nombre del cliente</label>
+                <input
+                  type="text"
+                  value={saleForm.nombreCliente}
+                  onChange={(e) => handleSaleFieldChange('nombreCliente', e.target.value)}
+                  placeholder="Cliente Mostrador"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email del cliente</label>
+                <input
+                  type="email"
+                  value={saleForm.emailCliente}
+                  onChange={(e) => handleSaleFieldChange('emailCliente', e.target.value)}
+                  placeholder="opcional@email.com"
+                />
+              </div>
+              <div className="form-group">
+                <label>Método de pago</label>
+                <select
+                  value={saleForm.metodoPago}
+                  onChange={(e) => handleSaleFieldChange('metodoPago', e.target.value)}
+                >
+                  {paymentMethods.map(method => (
+                    <option key={method} value={method}>{method.replaceAll('_', ' ')}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Observaciones</label>
+              <textarea
+                value={saleForm.observaciones}
+                onChange={(e) => handleSaleFieldChange('observaciones', e.target.value)}
+                placeholder="Notas adicionales para esta venta"
+              />
+            </div>
+            <div className="sale-items">
+              <h4>Productos</h4>
+              {saleForm.items.map((item, index) => (
+                <div key={`sale-item-${index}`} className="sale-item-row">
+                  <select
+                    value={item.productId}
+                    onChange={(e) => handleSaleItemChange(index, 'productId', e.target.value)}
+                  >
+                    <option value="">Selecciona un producto</option>
+                    {data.products.map(product => (
+                      <option key={product.id} value={product.id}>
+                        {product.nombre} ({formatCurrency(product.precio)})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.cantidad}
+                    onChange={(e) => handleSaleItemChange(index, 'cantidad', e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Mensaje (opcional)"
+                    value={item.mensajePersonalizado}
+                    onChange={(e) => handleSaleItemChange(index, 'mensajePersonalizado', e.target.value)}
+                  />
+                  {saleForm.items.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-icon"
+                      onClick={() => removeSaleItem(index)}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn-secondary btn-sm"
+                onClick={addSaleItem}
+              >
+                + Agregar producto
+              </button>
+            </div>
+            <div className="direct-sale-actions">
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={isSubmittingSale}
+              >
+                {isSubmittingSale ? 'Registrando...' : 'Registrar venta'}
+              </button>
+            </div>
+          </form>
+        </div>
+        <DataTable
+          title="Ventas"
+          data={data.sales}
+          columns={columns}
+          actions={false}
+          emptyMessage="No hay ventas registradas"
+        />
+      </div>
     );
   };
 
@@ -599,13 +837,6 @@ const AdminDashboard = () => {
               Pedidos
             </button>
             <button 
-              className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => changeTab('users')}
-            >
-              <span className="nav-icon">👥</span>
-              Lista Usuarios
-            </button>
-            <button 
               className={`nav-item ${activeTab === 'userManagement' ? 'active' : ''}`}
               onClick={() => changeTab('userManagement')}
             >
@@ -630,10 +861,18 @@ const AdminDashboard = () => {
         </div>
 
         <div className="admin-main">
+          {(actionMessage || actionError) && (
+            <div className={`action-feedback ${actionError ? 'error' : 'success'}`}>
+              <span>{actionError || actionMessage}</span>
+              <button onClick={() => {
+                setActionMessage(null);
+                setActionError(null);
+              }}>×</button>
+            </div>
+          )}
           {activeTab === 'dashboard' && renderDashboard()}
           {activeTab === 'products' && <ProductManagement />}
           {activeTab === 'orders' && renderOrders()}
-          {activeTab === 'users' && renderUsers()}
           {activeTab === 'userManagement' && <UserManagement />}
           {activeTab === 'sales' && renderSales()}
           {activeTab === 'reports' && renderReports()}

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useAlert } from '../contexts/AlertContext';
 import LoginForm from './LoginForm';
+import { isValidEmail, isValidPhone } from '../utils/validators';
 import '../styles/CartModal.css';
 
 const CartModal = ({ onClose }) => {
@@ -33,6 +34,45 @@ const CartModal = ({ onClose }) => {
     email: '',
     telefono: ''
   });
+  const [guestErrors, setGuestErrors] = useState({});
+
+  useEffect(() => {
+    if (!showGuestForm) {
+      setGuestErrors({});
+    }
+  }, [showGuestForm]);
+
+  const sanitizePhoneInput = (value) => value.replace(/[^\d\s]/g, '');
+
+  const validateGuestField = (field, value) => {
+    const trimmed = value.trim();
+    switch (field) {
+      case 'nombre':
+        if (!trimmed) return 'El nombre es obligatorio.';
+        if (trimmed.length < 3) return 'El nombre debe tener al menos 3 caracteres.';
+        return '';
+      case 'email':
+        if (!trimmed) return 'El email es obligatorio.';
+        if (!isValidEmail(trimmed)) return 'El formato del email no es válido.';
+        return '';
+      case 'telefono':
+        if (!trimmed) return 'El teléfono es obligatorio.';
+        if (!isValidPhone(trimmed)) return 'Ingresa un teléfono válido (9 1234 5678).';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const validateGuestForm = () => {
+    const fields = ['nombre', 'email', 'telefono'];
+    const validationResults = {};
+    fields.forEach((field) => {
+      validationResults[field] = validateGuestField(field, guestInfo[field]);
+    });
+    setGuestErrors(validationResults);
+    return Object.values(validationResults).every((message) => !message);
+  };
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -53,7 +93,7 @@ const CartModal = ({ onClose }) => {
     
     setIsProcessing(true);
     try {
-      const order = await createOrder(discount);
+      const order = await createOrder(discount, null, { observaciones: notes });
       setOrderSuccess(true);
       setTimeout(() => {
         onClose();
@@ -67,20 +107,14 @@ const CartModal = ({ onClose }) => {
   };
 
   const handleGuestOrder = async () => {
-    if (!guestInfo.nombre || !guestInfo.email || !guestInfo.telefono) {
-      showError('Por favor completa todos los campos requeridos');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(guestInfo.email)) {
-      showError('Por favor ingresa un email válido');
+    if (!validateGuestForm()) {
+      showError('Por favor corrige los campos marcados antes de confirmar el pedido.');
       return;
     }
 
     setIsProcessing(true);
     try {
-      const order = await createOrder(discount, guestInfo);
+      const order = await createOrder(discount, guestInfo, { observaciones: notes });
       setOrderSuccess(true);
       setTimeout(() => {
         onClose();
@@ -94,9 +128,14 @@ const CartModal = ({ onClose }) => {
   };
 
   const handleGuestInfoChange = (field, value) => {
+    const nextValue = field === 'telefono' ? sanitizePhoneInput(value) : value;
     setGuestInfo(prev => ({
       ...prev,
-      [field]: value
+      [field]: nextValue
+    }));
+    setGuestErrors(prev => ({
+      ...prev,
+      [field]: validateGuestField(field, nextValue)
     }));
   };
 
@@ -146,8 +185,10 @@ const CartModal = ({ onClose }) => {
                 value={guestInfo.nombre}
                 onChange={(e) => handleGuestInfoChange('nombre', e.target.value)}
                 placeholder="Tu nombre completo"
-                required
+                aria-required="true"
+                aria-invalid={Boolean(guestErrors.nombre)}
               />
+              {guestErrors.nombre && <span className="error-message">{guestErrors.nombre}</span>}
             </div>
             
             <div className="form-group">
@@ -157,8 +198,10 @@ const CartModal = ({ onClose }) => {
                 value={guestInfo.email}
                 onChange={(e) => handleGuestInfoChange('email', e.target.value)}
                 placeholder="tu@email.com"
-                required
+                aria-required="true"
+                aria-invalid={Boolean(guestErrors.email)}
               />
+              {guestErrors.email && <span className="error-message">{guestErrors.email}</span>}
             </div>
             
             <div className="form-group">
@@ -168,8 +211,10 @@ const CartModal = ({ onClose }) => {
                 value={guestInfo.telefono}
                 onChange={(e) => handleGuestInfoChange('telefono', e.target.value)}
                 placeholder="9 1234 5678"
-                required
+                aria-required="true"
+                aria-invalid={Boolean(guestErrors.telefono)}
               />
+              {guestErrors.telefono && <span className="error-message">{guestErrors.telefono}</span>}
             </div>
             
             <div className="guest-form-actions">

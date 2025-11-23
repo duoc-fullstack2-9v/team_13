@@ -23,6 +23,30 @@ const UserManagement = () => {
     password: ''
   });
 
+  const sanitizePhoneValue = (value = '') => value.replace(/[^\d+\s-]/g, '');
+
+  const normalizeDateValue = (date) => {
+    if (!date) return null;
+    if (typeof date.toDate === 'function') {
+      return date.toDate();
+    }
+    const parsed = new Date(date);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const formatLastLogin = (user) => {
+    const normalized = normalizeDateValue(user?.lastLogin || user?.fechaRegistro);
+    return normalized ? normalized.toLocaleString('es-CL') : 'N/A';
+  };
+
+  const handleFormFieldChange = (field, value) => {
+    const nextValue = field === 'telefono' ? sanitizePhoneValue(value) : value;
+    setFormData(prev => ({
+      ...prev,
+      [field]: nextValue
+    }));
+  };
+
   useEffect(() => {
     loadUsers();
     loadStats();
@@ -76,6 +100,10 @@ const UserManagement = () => {
       showAlert('Por favor completa todos los campos obligatorios', 'error');
       return;
     }
+    if (formData.telefono && formData.telefono.replace(/\D/g, '').length < 8) {
+      showAlert('El teléfono ingresado no es válido', 'error');
+      return;
+    }
 
     try {
       await firebaseUserService.createUser(formData);
@@ -101,6 +129,10 @@ const UserManagement = () => {
     e.preventDefault();
     
     if (!selectedUser) return;
+    if (formData.telefono && formData.telefono.replace(/\D/g, '').length > 0 && formData.telefono.replace(/\D/g, '').length < 8) {
+      showAlert('El teléfono ingresado no es válido', 'error');
+      return;
+    }
 
     try {
       const updateData = { ...formData };
@@ -134,12 +166,13 @@ const UserManagement = () => {
   };
 
   const openEditModal = (user) => {
+    const displayParts = (user?.displayName || '').split(' ').filter(Boolean);
     setSelectedUser(user);
     setFormData({
       email: user.email || '',
-      nombre: user.nombre || '',
-      apellido: user.apellido || '',
-      telefono: user.telefono || '',
+      nombre: user.nombre || displayParts[0] || '',
+      apellido: user.apellido || displayParts.slice(1).join(' ') || '',
+      telefono: sanitizePhoneValue(user.telefono || ''),
       userType: user.userType || 'customer',
       password: ''
     });
@@ -156,11 +189,6 @@ const UserManagement = () => {
       password: ''
     });
     setIsCreateModalOpen(true);
-  };
-
-  const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('es-CL');
   };
 
   const getUserTypeLabel = (userType) => {
@@ -203,7 +231,7 @@ const UserManagement = () => {
           </div>
           <div className="stat-card">
             <h3>{stats.customers || 0}</h3>
-            <p>Клиentes</p>
+            <p>Clientes</p>
           </div>
         </div>
       </div>
@@ -235,7 +263,7 @@ const UserManagement = () => {
               <th>Email</th>
               <th>Nombre</th>
               <th>Tipo</th>
-              <th>Fecha Registro</th>
+              <th>Último Login</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -250,7 +278,7 @@ const UserManagement = () => {
                     {getUserTypeLabel(user.userType)}
                   </span>
                 </td>
-                <td>{formatDate(user.fechaRegistro)}</td>
+                <td>{formatLastLogin(user)}</td>
                 <td>
                   <span className={`status-badge ${user.activo !== false ? 'active' : 'inactive'}`}>
                     {user.activo !== false ? 'Activo' : 'Inactivo'}
@@ -309,35 +337,35 @@ const UserManagement = () => {
               </div>
               <div className="form-group">
                 <label>Nombre *</label>
-                <input
-                  type="text"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                  required
-                />
+              <input
+                type="text"
+                value={formData.nombre}
+                onChange={(e) => handleFormFieldChange('nombre', e.target.value)}
+                required
+              />
               </div>
               <div className="form-group">
                 <label>Apellido</label>
-                <input
-                  type="text"
-                  value={formData.apellido}
-                  onChange={(e) => setFormData({...formData, apellido: e.target.value})}
-                />
+              <input
+                type="text"
+                value={formData.apellido}
+                onChange={(e) => handleFormFieldChange('apellido', e.target.value)}
+              />
               </div>
               <div className="form-group">
                 <label>Teléfono</label>
-                <input
-                  type="tel"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                />
+              <input
+                type="tel"
+                value={formData.telefono}
+                onChange={(e) => handleFormFieldChange('telefono', e.target.value)}
+              />
               </div>
               <div className="form-group">
                 <label>Tipo de Usuario</label>
-                <select
-                  value={formData.userType}
-                  onChange={(e) => setFormData({...formData, userType: e.target.value})}
-                >
+              <select
+                value={formData.userType}
+                onChange={(e) => handleFormFieldChange('userType', e.target.value)}
+              >
                   <option value="customer">Cliente</option>
                   <option value="admin">Administrador</option>
                 </select>
@@ -398,7 +426,7 @@ const UserManagement = () => {
                 <input
                   type="text"
                   value={formData.nombre}
-                  onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                  onChange={(e) => handleFormFieldChange('nombre', e.target.value)}
                 />
               </div>
               <div className="form-group">
@@ -406,7 +434,7 @@ const UserManagement = () => {
                 <input
                   type="text"
                   value={formData.apellido}
-                  onChange={(e) => setFormData({...formData, apellido: e.target.value})}
+                  onChange={(e) => handleFormFieldChange('apellido', e.target.value)}
                 />
               </div>
               <div className="form-group">
@@ -414,14 +442,14 @@ const UserManagement = () => {
                 <input
                   type="tel"
                   value={formData.telefono}
-                  onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                  onChange={(e) => handleFormFieldChange('telefono', e.target.value)}
                 />
               </div>
               <div className="form-group">
                 <label>Tipo de Usuario</label>
                 <select
                   value={formData.userType}
-                  onChange={(e) => setFormData({...formData, userType: e.target.value})}
+                  onChange={(e) => handleFormFieldChange('userType', e.target.value)}
                 >
                   <option value="customer">Cliente</option>
                   <option value="admin">Administrador</option>

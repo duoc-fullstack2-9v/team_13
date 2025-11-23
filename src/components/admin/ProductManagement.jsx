@@ -68,15 +68,19 @@ const ProductManagement = () => {
     setFilteredProducts(filtered);
   };
 
-  const handleAddProduct = () => {
-    setEditingProduct(null);
-    setShowModal(true);
-  };
-
-  const handleEditProduct = (product) => {
+  const openModal = (product = null) => {
     setEditingProduct(product);
     setShowModal(true);
   };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingProduct(null);
+  };
+
+  const handleAddProduct = () => openModal();
+
+  const handleEditProduct = (product) => openModal(product);
 
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
@@ -107,14 +111,22 @@ const ProductManagement = () => {
     }
   };
 
-  const handleProductSaved = () => {
-    setShowModal(false);
-    setEditingProduct(null);
-    loadProducts();
-    showAlert(
-      editingProduct ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente',
-      'success'
-    );
+  const handleSaveProduct = async (productData) => {
+    try {
+      if (editingProduct) {
+        await apiService.updateProduct(editingProduct.id, productData);
+        showAlert('Producto actualizado exitosamente', 'success');
+      } else {
+        await apiService.createProduct(productData);
+        showAlert('Producto creado exitosamente', 'success');
+      }
+      await loadProducts();
+      closeModal();
+    } catch (err) {
+      console.error('Error al guardar producto:', err);
+      setError('Error al guardar producto: ' + err.message);
+      showAlert('Error al guardar producto', 'error');
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -216,7 +228,6 @@ const ProductManagement = () => {
           <thead>
             <tr>
               <th>Código</th>
-              <th>Imagen</th>
               <th>Nombre</th>
               <th>Categoría</th>
               <th>Precio</th>
@@ -229,20 +240,6 @@ const ProductManagement = () => {
             {filteredProducts.map((product) => (
               <tr key={product.id}>
                 <td className="product-code">{product.codigo}</td>
-                <td className="product-image">
-                  {product.imagen ? (
-                    <img
-                      src={product.imagen}
-                      alt={product.nombre}
-                      className="table-product-image"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="no-image">Sin imagen</div>
-                  )}
-                </td>
                 <td className="product-name">{product.nombre}</td>
                 <td className="product-category">
                   {getCategoryName(product.categoria)}
@@ -264,23 +261,20 @@ const ProductManagement = () => {
                   <button
                     onClick={() => handleEditProduct(product)}
                     className="btn btn-sm btn-secondary"
-                    title="Editar"
                   >
-                    ✏️
+                    Editar
                   </button>
                   <button
                     onClick={() => handleToggleProduct(product.id, product.activo)}
                     className={`btn btn-sm ${product.activo ? 'btn-warning' : 'btn-success'}`}
-                    title={product.activo ? 'Desactivar' : 'Activar'}
                   >
-                    {product.activo ? '⏸️' : '▶️'}
+                    {product.activo ? 'Desactivar' : 'Activar'}
                   </button>
                   <button
                     onClick={() => handleDeleteProduct(product.id)}
                     className="btn btn-sm btn-danger"
-                    title="Eliminar"
                   >
-                    🗑️
+                    Eliminar
                   </button>
                 </td>
               </tr>
@@ -300,11 +294,8 @@ const ProductManagement = () => {
         <ProductModal
           product={editingProduct}
           categories={categories}
-          onSave={handleProductSaved}
-          onCancel={() => {
-            setShowModal(false);
-            setEditingProduct(null);
-          }}
+          onSave={handleSaveProduct}
+          onClose={closeModal}
         />
       )}
     </div>

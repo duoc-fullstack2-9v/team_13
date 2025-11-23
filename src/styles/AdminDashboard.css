@@ -6,12 +6,13 @@
 
 .admin-container {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 300px 1fr;
   min-height: calc(100vh - 80px);
-  max-width: 1400px;
+  width: 100%;
+  max-width: 1700px;
   margin: 0 auto;
   gap: 2rem;
-  padding: 2rem;
+  padding: 2rem 3rem;
 }
 
 /* Sidebar */
@@ -79,7 +80,7 @@
   border-radius: 15px;
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Dashboard Content */
@@ -121,6 +122,11 @@
   overflow: hidden;
 }
 
+.stat-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .stat-card::before {
   content: '';
   position: absolute;
@@ -153,6 +159,7 @@
   font-weight: 700;
   color: #884513;
   margin: 0 0 0.5rem 0;
+  word-break: break-word;
 }
 
 .stat-info p {
@@ -198,6 +205,143 @@
 .activity-item:hover {
   background: #fff5e1;
   transform: translateX(5px);
+}
+
+.action-feedback {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.action-feedback.success {
+  background-color: #e6f4ea;
+  border: 1px solid #c7eed8;
+  color: #146c43;
+}
+
+.action-feedback.error {
+  background-color: #fde2e1;
+  border: 1px solid #f5c2c0;
+  color: #b02a37;
+}
+
+.action-feedback button {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.sales-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.direct-sale-card {
+  background: #fff9f4;
+  border: 1px solid #f1f3f5;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.direct-sale-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.direct-sale-form input,
+.direct-sale-form select,
+.direct-sale-form textarea {
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  background-color: #fff;
+}
+
+.direct-sale-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.sale-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.sale-items {
+  border: 1px dashed #ffc0cb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sale-items h4 {
+  margin: 0 0 1rem 0;
+  color: #884513;
+}
+
+.sale-item-row {
+  display: grid;
+  grid-template-columns: 2fr 110px 1.5fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.sale-item-row input,
+.sale-item-row select {
+  width: 100%;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffc0cb;
+  border: none;
+  color: #884513;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.btn-icon:hover {
+  opacity: 0.8;
+}
+
+.direct-sale-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  margin-left: 0.25rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-success.btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.btn-success:hover {
+  background-color: #218838;
 }
 
 .activity-icon {
@@ -254,7 +398,7 @@
 }
 
 .table-wrapper {
-  overflow-x: auto;
+  overflow-x: visible;
 }
 
 .data-table {
@@ -274,6 +418,12 @@
   letter-spacing: 1px;
 }
 
+.data-table th,
+.data-table td {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .data-table td {
   padding: 1rem;
   border-bottom: 1px solid #e9ecef;
@@ -288,6 +438,7 @@
 .actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -298,6 +449,10 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  min-width: 110px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
 }
 
 .status-indicator {

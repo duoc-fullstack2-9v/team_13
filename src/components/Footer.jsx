@@ -12,9 +12,9 @@ const Footer = () => {
         </div>
         <div className="footer-section">
           <h4>Contáctanos</h4>
-          <p>Email: info@mil-sabores.cl</p>
-          <p>Teléfono: +56 2 1234 5678</p>
-          <p>Dirección: Av. Dulce 123, Santiago</p>
+          <p>Email: team13@gruporeact.duocuc.cl</p>
+          <p>Teléfono: +56 2 2234 5678</p>
+          <p>Dirección: Av. Los Carrera 500, Quilpué</p>
         </div>
         <div className="footer-section">
           <h4>Síguenos</h4>

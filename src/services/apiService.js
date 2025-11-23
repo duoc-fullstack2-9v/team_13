@@ -3,6 +3,39 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://168.197.50.14:8080';  // VPS por defecto
 // Para desarrollo local, cambiar a: 'http://localhost:8080'
 
+const normalizeOrdersCollection = (response) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (Array.isArray(response?.pedidos)) {
+    return response.pedidos;
+  }
+  if (Array.isArray(response?.data?.pedidos)) {
+    return response.data.pedidos;
+  }
+  if (Array.isArray(response?.results)) {
+    return response.results;
+  }
+  return [];
+};
+
+const normalizeOrderEntity = (response) => {
+  return response?.pedido || response;
+};
+
+const normalizeSalesCollection = (response) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (Array.isArray(response?.ventas)) {
+    return response.ventas;
+  }
+  if (Array.isArray(response?.data?.ventas)) {
+    return response.data.ventas;
+  }
+  return [];
+};
+
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -21,12 +54,23 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+      const responseText = await response.text();
+      let data = null;
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          data = responseText;
+        }
+      }
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error = new Error(data?.message || `HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        error.data = data;
+        throw error;
       }
       
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error('API Error:', error);
@@ -63,15 +107,27 @@ class ApiService {
     });
   }
 
+  async toggleProductStatus(id, isActive) {
+    return this.request(`/api/productos/${id}/estado`, {
+      method: 'PUT',
+      body: JSON.stringify({ activo: isActive }),
+    });
+  }
+
   // STOCK
   async getStock() {
     return this.request('/api/productos/stock');
   }
 
-  async updateStock(id, quantity, operation) {
+  async getProductStock(id) {
+    const response = await this.request(`/api/productos/${id}/stock`);
+    return response?.stock ?? 0;
+  }
+
+  async updateStock(id, stock) {
     return this.request(`/api/productos/${id}/stock`, {
       method: 'PUT',
-      body: JSON.stringify({ quantity, operation }),
+      body: JSON.stringify({ stock }),
     });
   }
 
@@ -82,29 +138,62 @@ class ApiService {
 
   // VENTAS
   async getSales() {
-    return this.request('/api/ventas');
+    const response = await this.request('/api/ventas');
+    return normalizeSalesCollection(response);
   }
 
   async createSale(saleData) {
-    return this.request('/api/ventas', {
+    const response = await this.request('/api/ventas', {
       method: 'POST',
       body: JSON.stringify(saleData),
     });
+    return response?.venta || response;
   }
 
   // PEDIDOS
   async getOrders() {
     const response = await this.request('/api/pedidos');
     // La API devuelve {success: true, count: X, pedidos: [...]}
-    return response.pedidos || [];
+    return normalizeOrdersCollection(response);
   }
 
   async getOrdersByUser(userEmail) {
-    return this.request(`/api/pedidos/usuario/${encodeURIComponent(userEmail)}`);
+    const normalizedEmail = (userEmail || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return [];
+    }
+
+    const tryEndpoint = async (endpoint) => {
+      try {
+        const response = await this.request(endpoint);
+        return normalizeOrdersCollection(response);
+      } catch (error) {
+        if (error.status === 404) {
+          return [];
+        }
+        throw error;
+      }
+    };
+
+    const primaryOrders = await tryEndpoint(`/api/pedidos/usuario/${encodeURIComponent(normalizedEmail)}`);
+    if (primaryOrders.length > 0) {
+      return primaryOrders;
+    }
+
+    return tryEndpoint(`/api/pedidos/cliente/${encodeURIComponent(normalizedEmail)}`);
   }
 
   async getOrder(orderId) {
-    return this.request(`/api/pedidos/${orderId}`);
+    const response = await this.request(`/api/pedidos/${orderId}`);
+    return normalizeOrderEntity(response);
+  }
+
+  async getOrderTracking(orderNumber) {
+    if (!orderNumber) {
+      return null;
+    }
+    const response = await this.request(`/api/pedidos/${encodeURIComponent(orderNumber)}/seguimiento`);
+    return normalizeOrderEntity(response);
   }
 
   async createOrder(orderData) {
@@ -127,9 +216,10 @@ class ApiService {
     });
   }
 
-  async convertOrderToSale(orderId) {
-    return this.request(`/api/pedidos/${orderId}/convert-to-sale`, {
+  async convertOrderToSale(orderId, metodoPago = 'EFECTIVO') {
+    return this.request(`/api/pedidos/${orderId}/convertir-a-venta`, {
       method: 'POST',
+      body: JSON.stringify({ metodoPago }),
     });
   }
 
@@ -154,8 +244,15 @@ class ApiService {
   }
 
   async getUserByEmail(email) {
-    const response = await this.request(`/api/usuarios/email/${encodeURIComponent(email)}`);
-    return response.usuario || null;
+    try {
+      const response = await this.request(`/api/usuarios/email/${encodeURIComponent(email)}`);
+      return response?.usuario || null;
+    } catch (error) {
+      if (error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async createUser(userData) {
@@ -169,29 +266,26 @@ class ApiService {
   async getAllOrders() {
     const response = await this.request('/api/pedidos');
     // La API devuelve {success: true, count: X, pedidos: [...]}
-    return response.pedidos || [];
+    return normalizeOrdersCollection(response);
   }
 
-  // VENTAS - métodos adicionales para admin (usar pedidos completados como ventas)
+  // VENTAS - métodos adicionales para admin
   async getAllSales() {
-    const response = await this.request('/api/pedidos');
-    // Filtrar solo pedidos entregados como "ventas"
-    const pedidos = response.pedidos || [];
-    return pedidos.filter(pedido => pedido.estado === 'ENTREGADO');
+    return this.getSales();
   }
 
   async getSalesStats() {
-    // Calcular estadísticas desde los pedidos
-    const orders = await this.getAllOrders();
-    const sales = orders.filter(order => order.estado === 'ENTREGADO');
-    const totalSales = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-    
-    return {
-      totalSales,
-      totalOrders: sales.length,
-      averageOrderValue: sales.length > 0 ? totalSales / sales.length : 0,
-      salesByMonth: {} // Se puede expandir más tarde
-    };
+    try {
+      return await this.request('/api/ventas/estadisticas');
+    } catch (error) {
+      const sales = await this.getSales();
+      const totalSales = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+      return {
+        totalSales,
+        totalVentas: sales.length,
+        averageOrderValue: sales.length > 0 ? totalSales / sales.length : 0,
+      };
+    }
   }
 
   async getSalesReport(startDate, endDate) {

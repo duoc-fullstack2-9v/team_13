@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/AdminManager.css';
@@ -44,6 +44,19 @@ const AdminManager = () => {
         createdAt: serverTimestamp(),
         permissions: ['products', 'users', 'sales', 'reports']
       });
+
+      // También actualizar userType en la colección 'users' si existe
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', newAdminEmail));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        await updateDoc(doc(db, 'users', userDoc.id), {
+          userType: 'admin'
+        });
+        console.log('✅ UserType actualizado en colección users');
+      }
 
       setMessage(`✅ Admin agregado: ${newAdminEmail}`);
       setNewAdminEmail('');

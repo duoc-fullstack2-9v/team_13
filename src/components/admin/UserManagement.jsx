@@ -139,6 +139,13 @@ const UserManagement = () => {
       delete updateData.password; // No actualizar password desde este formulario
       
       await firebaseUserService.updateUser(selectedUser.id, updateData);
+      
+      // Sincronizar con colección 'admins' si cambió el userType
+      const userTypeChanged = selectedUser.userType !== formData.userType;
+      if (userTypeChanged) {
+        await firebaseUserService.syncAdminCollection(selectedUser.email, formData.userType, formData.nombre, formData.apellido);
+      }
+      
       showAlert('Usuario actualizado exitosamente', 'success');
       setIsEditModalOpen(false);
       setSelectedUser(null);

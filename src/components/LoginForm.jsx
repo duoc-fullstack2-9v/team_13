@@ -85,13 +85,14 @@ const LoginForm = ({ onSuccess, onError, onClose }) => {
       
     } catch (error) {
       console.error('Error en login:', error);
-      const errorMessage = getFirebaseErrorMessage(error.code);
+      // El error ya viene traducido desde AuthContext
+      const errorMessage = error.message || 'Error al iniciar sesión. Por favor, intenta nuevamente.';
       
       if (onError) {
-        onError(new Error(errorMessage));
+        onError(error);
       }
       
-      showError('Error al iniciar sesión: ' + errorMessage);
+      showError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +118,8 @@ const LoginForm = ({ onSuccess, onError, onClose }) => {
       
     } catch (error) {
       console.error('Error en login con Google:', error);
-      const errorMessage = 'Error al iniciar sesión con Google. Por favor, intenta nuevamente.';
+      // El error ya viene traducido desde AuthContext
+      const errorMessage = error.message || 'Error al iniciar sesión con Google. Por favor, intenta nuevamente.';
       
       if (onError) {
         onError(new Error(errorMessage));

@@ -1,4 +1,4 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 class AdminService {
@@ -7,6 +7,22 @@ class AdminService {
     try {
       if (!email) return false;
       
+      // PRIMERO: Buscar en la colección 'users' por userType='admin'
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+        
+        // Si el userType es 'admin', es administrador
+        if (userData.userType === 'admin') {
+          return true;
+        }
+      }
+      
+      // SEGUNDO: Buscar en la colección 'admins' (compatibilidad con sistema antiguo)
       const adminDoc = await getDoc(doc(db, 'admins', email));
       
       if (adminDoc.exists()) {

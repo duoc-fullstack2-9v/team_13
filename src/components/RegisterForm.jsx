@@ -90,15 +90,8 @@ const RegisterForm = ({ onSuccess, onError }) => {
     } catch (error) {
       console.error("Error en registro:", error);
       
-      let errorMessage = "Error al crear la cuenta";
-      
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "Este email ya está registrado";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "La contraseña es muy débil";
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "El email no es válido";
-      }
+      // El error ya viene traducido desde AuthContext
+      const errorMessage = error.message || "Error al crear la cuenta. Por favor, intenta nuevamente.";
 
       showAlert(errorMessage, "error");
       
@@ -123,7 +116,9 @@ const RegisterForm = ({ onSuccess, onError }) => {
       }
     } catch (error) {
       console.error("Error en registro con Google:", error);
-      showAlert("Error al registrarse con Google", "error");
+      // El error ya viene traducido desde AuthContext
+      const errorMessage = error.message || "Error al registrarse con Google. Por favor, intenta nuevamente.";
+      showAlert(errorMessage, "error");
     } finally {
       setIsSubmitting(false);
     }

@@ -15,6 +15,39 @@ const AuthContext = createContext();
 
 const DEFAULT_USER_AGE = 25;
 
+// Función para traducir códigos de error de Firebase al español
+const translateFirebaseError = (errorCode) => {
+  const errorMessages = {
+    // Errores de autenticación
+    'auth/user-not-found': 'No existe una cuenta con este correo electrónico.',
+    'auth/wrong-password': 'La contraseña es incorrecta. Por favor, inténtalo de nuevo.',
+    'auth/invalid-email': 'El formato del correo electrónico no es válido.',
+    'auth/user-disabled': 'Esta cuenta ha sido deshabilitada. Contacta al administrador.',
+    'auth/email-already-in-use': 'Este correo electrónico ya está registrado. Intenta iniciar sesión.',
+    'auth/weak-password': 'La contraseña es muy débil. Debe tener al menos 6 caracteres.',
+    'auth/invalid-credential': 'Las credenciales son inválidas. Verifica tu correo y contraseña.',
+    'auth/too-many-requests': 'Demasiados intentos fallidos. Por favor, espera unos minutos e inténtalo nuevamente.',
+    'auth/operation-not-allowed': 'Esta operación no está permitida. Contacta al administrador.',
+    
+    // Errores de Google Sign-In
+    'auth/unauthorized-domain': 'Este dominio no está autorizado para usar Google Sign-In.',
+    'auth/popup-blocked': 'El popup de login fue bloqueado por tu navegador. Permite popups para este sitio.',
+    'auth/popup-closed-by-user': 'Cerraste la ventana de login antes de completar el proceso.',
+    'auth/cancelled-popup-request': 'Se canceló la solicitud de login.',
+    'auth/network-request-failed': 'Error de conexión. Verifica tu internet.',
+    
+    // Errores de sesión
+    'auth/requires-recent-login': 'Por seguridad, debes iniciar sesión nuevamente para realizar esta acción.',
+    'auth/invalid-user-token': 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+    'auth/user-token-expired': 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+    
+    // Error genérico
+    'default': 'Ocurrió un error inesperado. Por favor, inténtalo nuevamente.'
+  };
+  
+  return errorMessages[errorCode] || errorMessages['default'];
+};
+
 const calculateAgeFromBirthdate = (dateString) => {
   if (!dateString) return null;
   const parsed = new Date(dateString);
@@ -200,8 +233,21 @@ export const AuthProvider = ({ children }) => {
       return result;
     } catch (err) {
       console.error('Error en login con Google:', err);
-      setError(err.message);
-      throw err;
+      
+      // Manejo especial de errores de Google Auth
+      let errorMessage = translateFirebaseError(err.code);
+      
+      // Error específico cuando el dominio no está autorizado
+      if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = 'El dominio actual no está autorizado para Google Sign-In. Debes agregar este dominio en Firebase Console.';
+      }
+      
+      setError(errorMessage);
+      
+      // Crear error con mensaje traducido
+      const translatedError = new Error(errorMessage);
+      translatedError.code = err.code;
+      throw translatedError;
     } finally {
       setLoading(false);
     }
@@ -233,8 +279,13 @@ export const AuthProvider = ({ children }) => {
       return result;
     } catch (err) {
       console.error('Error en registro:', err);
-      setError(err.message);
-      throw err;
+      const errorMessage = translateFirebaseError(err.code);
+      setError(errorMessage);
+      
+      // Crear error con mensaje traducido
+      const translatedError = new Error(errorMessage);
+      translatedError.code = err.code;
+      throw translatedError;
     } finally {
       setLoading(false);
     }
@@ -255,8 +306,13 @@ export const AuthProvider = ({ children }) => {
       return result;
     } catch (err) {
       console.error('Error en login:', err);
-      setError(err.message);
-      throw err;
+      const errorMessage = translateFirebaseError(err.code);
+      setError(errorMessage);
+      
+      // Crear error con mensaje traducido
+      const translatedError = new Error(errorMessage);
+      translatedError.code = err.code;
+      throw translatedError;
     } finally {
       setLoading(false);
     }
@@ -265,11 +321,27 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       setError(null);
+      setLoading(true);
+      
+      // Cerrar sesión en Firebase
       await firebaseSignOut(auth);
+      
+      // Limpiar estado local
+      setUser(null);
+      
+      console.log('✅ Sesión cerrada correctamente');
+      
+      // Forzar redirección a la página principal
+      window.location.href = '/';
     } catch (err) {
       console.error('Error en logout:', err);
       setError(err.message);
-      throw err;
+      
+      // Incluso si hay error, limpiar sesión localmente
+      setUser(null);
+      window.location.href = '/';
+    } finally {
+      setLoading(false);
     }
   };
 

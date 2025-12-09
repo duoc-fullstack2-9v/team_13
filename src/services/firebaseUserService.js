@@ -24,6 +24,33 @@ class FirebaseUserService {
     this.usersCollection = 'users';
   }
 
+  // Sincronizar colección 'admins' cuando cambia userType
+  async syncAdminCollection(email, userType, nombre = '', apellido = '') {
+    try {
+      if (userType === 'admin') {
+        // Si es admin, crear/actualizar en colección admins
+        await setDoc(doc(db, 'admins', email), {
+          email: email,
+          displayName: `${nombre} ${apellido}`.trim() || email,
+          isActive: true,
+          createdAt: serverTimestamp(),
+          permissions: ['products', 'users', 'sales', 'reports']
+        }, { merge: true });
+        console.log('✅ Usuario agregado a colección admins:', email);
+      } else {
+        // Si no es admin, eliminar de colección admins si existe
+        const adminDoc = await getDoc(doc(db, 'admins', email));
+        if (adminDoc.exists()) {
+          await deleteDoc(doc(db, 'admins', email));
+          console.log('✅ Usuario removido de colección admins:', email);
+        }
+      }
+    } catch (error) {
+      console.error('Error sincronizando colección admins:', error);
+      // No lanzar error para no bloquear la actualización del usuario
+    }
+  }
+
   // Obtener todos los usuarios
   async getAllUsers() {
     try {

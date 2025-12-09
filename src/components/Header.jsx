@@ -171,7 +171,15 @@ const Header = () => {
                 </li>
                 <li>
                   <button 
-                    onClick={signOut}
+                    onClick={async () => {
+                      try {
+                        await signOut();
+                      } catch (error) {
+                        console.error('Error al cerrar sesión:', error);
+                        // Forzar redirección incluso si hay error
+                        window.location.href = '/';
+                      }
+                    }}
                     className="logout-btn"
                   >
                     Cerrar Sesión

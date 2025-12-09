@@ -200,6 +200,24 @@ const AdminDashboard = () => {
       return;
     }
 
+    // Validar stock disponible antes de registrar la venta
+    const stockErrors = [];
+    for (const item of normalizedItems) {
+      const product = data.products.find(p => p.id === item.productId);
+      if (!product) {
+        stockErrors.push(`Producto con ID ${item.productId} no encontrado`);
+      } else if (product.stock === 0) {
+        stockErrors.push(`${product.nombre}: Sin stock disponible`);
+      } else if (item.cantidad > product.stock) {
+        stockErrors.push(`${product.nombre}: Stock insuficiente (disponible: ${product.stock}, solicitado: ${item.cantidad})`);
+      }
+    }
+
+    if (stockErrors.length > 0) {
+      setActionError('No se puede registrar la venta:\n' + stockErrors.join('\n'));
+      return;
+    }
+
     setIsSubmittingSale(true);
     try {
       await apiService.createSale({
@@ -630,42 +648,67 @@ const AdminDashboard = () => {
             </div>
             <div className="sale-items">
               <h4>Productos</h4>
-              {saleForm.items.map((item, index) => (
-                <div key={`sale-item-${index}`} className="sale-item-row">
-                  <select
-                    value={item.productId}
-                    onChange={(e) => handleSaleItemChange(index, 'productId', e.target.value)}
-                  >
-                    <option value="">Selecciona un producto</option>
-                    {data.products.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.nombre} ({formatCurrency(product.precio)})
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.cantidad}
-                    onChange={(e) => handleSaleItemChange(index, 'cantidad', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Mensaje (opcional)"
-                    value={item.mensajePersonalizado}
-                    onChange={(e) => handleSaleItemChange(index, 'mensajePersonalizado', e.target.value)}
-                  />
-                  {saleForm.items.length > 1 && (
-                    <button
-                      type="button"
-                      className="btn-icon"
-                      onClick={() => removeSaleItem(index)}
+              {saleForm.items.map((item, index) => {
+                const selectedProduct = data.products.find(p => p.id === Number(item.productId));
+                const availableStock = selectedProduct?.stock || 0;
+                const isOutOfStock = selectedProduct && availableStock === 0;
+                const exceedsStock = selectedProduct && item.cantidad > availableStock;
+                
+                return (
+                  <div key={`sale-item-${index}`} className="sale-item-row">
+                    <select
+                      value={item.productId}
+                      onChange={(e) => handleSaleItemChange(index, 'productId', e.target.value)}
                     >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
+                      <option value="">Selecciona un producto</option>
+                      {data.products.map(product => (
+                        <option 
+                          key={product.id} 
+                          value={product.id}
+                          disabled={product.stock === 0}
+                        >
+                          {product.nombre} ({formatCurrency(product.precio)}) - Stock: {product.stock}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="quantity-input-wrapper">
+                      <input
+                        type="number"
+                        min="1"
+                        max={availableStock || 999}
+                        value={item.cantidad}
+                        onChange={(e) => handleSaleItemChange(index, 'cantidad', e.target.value)}
+                        className={exceedsStock ? 'error-input' : ''}
+                      />
+                      {selectedProduct && (
+                        <span className={`stock-indicator ${isOutOfStock ? 'out-of-stock' : exceedsStock ? 'stock-warning' : 'stock-ok'}`}>
+                          {isOutOfStock ? '⚠️ Sin stock' : `📦 Disponible: ${availableStock}`}
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Mensaje (opcional)"
+                      value={item.mensajePersonalizado}
+                      onChange={(e) => handleSaleItemChange(index, 'mensajePersonalizado', e.target.value)}
+                    />
+                    {saleForm.items.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => removeSaleItem(index)}
+                      >
+                        ×
+                      </button>
+                    )}
+                    {exceedsStock && (
+                      <div className="stock-error-message">
+                        ⚠️ La cantidad solicitada ({item.cantidad}) supera el stock disponible ({availableStock})
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               <button
                 type="button"
                 className="btn-secondary btn-sm"
